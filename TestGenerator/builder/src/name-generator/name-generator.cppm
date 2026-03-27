@@ -25,7 +25,7 @@ namespace test_generator
 /* add node type for ast generator */
 
 export
-enum : unique_name_id_t  { RandomExistingName = 0LU };
+enum : unique_name_id_t  { RandomExistingName = 436334565LU };
 
 export
 struct UninitializedNameDeclaration{};

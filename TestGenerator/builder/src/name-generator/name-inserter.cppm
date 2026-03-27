@@ -8,17 +8,16 @@ export module name_inserter;
 export import thelast;
 import name_generator;
 
-
 namespace test_generator
 {
 
 export
-using names_insertable = void (name_generator::NameGenerator&);
+using names_insertable = void(name_generator::NameGenerator&);
 
 auto insert_names(last::node::BasicNode & node, name_generator::NameGenerator& name_generator)
     -> decltype(last::node::visit<void, name_generator::NameGenerator&>(node, name_generator))
 {
-    return last::node::visit<void, name_generator::NameGenerator&>(node, name_generator);
+    return last::node::visit<void, name_generatprint_variableor::NameGenerator&>(node, name_generator);
 }
 
 } /* namespace test_generator */
@@ -27,10 +26,10 @@ namespace last::node::visit_specializations
 {
 
 template <>
-void visit(Scan& , name_generator::NameGenerator& )
+void visit(Scan&, name_generator::NameGenerator& )
 {}
 
-template <>
+template <>visit
 void visit(Print& node, name_generator::NameGenerator& name_generator)
 {
     for (auto&& arg: node)

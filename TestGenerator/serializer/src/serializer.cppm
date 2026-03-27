@@ -7,7 +7,7 @@ module;
 #include <chrono>
 #include <string>
 
-export module serialize;
+export module ast_serializer;
 
 export import ast;
 
