@@ -1,0 +1,8 @@
+build/
+.cache/
+.venv/
+tmp/
+third-party/
+*.ast.json
+*.ll
+CMakeUserPresets.json
