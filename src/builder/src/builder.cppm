@@ -51,11 +51,11 @@ private:
     probability_t continue_expression_probability_;
 
     // будет приходить из парсера ===========================
-    std::size_t                  statement_depth_     = 0;
-    static constexpr std::size_t max_statement_depth_ = 3;
+                     std::size_t statement_depth_      = 0;
+    static constexpr std::size_t max_statement_depth_  = 3;
 
                      std::size_t expression_depth_     = 0;
-    static constexpr std::size_t max_expression_depth_ = 3;
+    static constexpr std::size_t max_expression_depth_ = 4;
     // =======================================================
 
     using generate_stmt_t = BasicNode (AstGenerator::*)();
@@ -94,13 +94,37 @@ private:
 
     void reset_continue_expression_probability()
     {
+        expression_depth_ = 0;
         continue_expression_probability_ = settings_.continue_expression_max_probability;
     }
 
-    void update_continue_expression_probability()
+    // void update_continue_expression_probability()
+    // {
+    //     continue_expression_probability_ *= 0.5;
+    //     // TODO: генерация числа от 0 до continue_expression_max_probability и она должна обновлять на каждом statment
+    // }
+
+    void update_continue_expression_probability() // TODO: сделать по нормальному, когда параметры будут не захардкожены
     {
-        continue_expression_probability_ *= 0.5; // TODO: генерация числа от 0 до continue_expression_max_probability и она должна обновлять на каждом statment
+        if (expression_depth_ >= max_expression_depth_)
+        {
+            continue_expression_probability_ = 0.0;
+            return;
+        }
+
+        auto remaining_depth =
+            static_cast<double>(max_expression_depth_ - expression_depth_);
+        auto total_depth     =
+            static_cast<double>(max_expression_depth_);
+
+        continue_expression_probability_=
+            settings_.continue_expression_max_probability * (remaining_depth / total_depth);
     }
+// depth = 0 → 0.8
+// depth = 1 → 0.6
+// depth = 2 → 0.4
+// depth = 3 → 0.2
+// depth = 4 → 0.0
 
     bool will_generate_new_statement()
     {
