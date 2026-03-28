@@ -157,7 +157,6 @@ set(AST_FUNCTIONAL_THELAST_SRC_DIR ${THELAST_SRC_DIR}/functional)
 set(AST_FUNCTIONAL_SRC
     ${AST_FUNCTIONAL_THELAST_SRC_DIR}/write.cppm
     ${AST_FUNCTIONAL_THELAST_SRC_DIR}/graphic-dump.cppm
-    ${AST_FUNCTIONAL_THELAST_SRC_DIR}/build-program.cppm
 
 )
 

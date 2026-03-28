@@ -9,17 +9,15 @@ module;
 
 export module ast_serializer;
 
-export import ast;
-
-import node_type_erasure;
-import ast_nodes;
-import node_traits;
+export import thelast;
+export import test_generator_settings;
 
 namespace test_generator
 {
 
 /* 'export' for last::node::serializable */
-export enum class BuildProgramSetting
+export
+enum class BuildProgramSetting
 {
     DummyValue = 0,
     NoEnclosure,
@@ -86,7 +84,6 @@ void statement_end(std::ostream& os)
 
 } /* namespace serialize */
 
-
 namespace last::node
 {
 
@@ -97,7 +94,6 @@ auto serialize(BasicNode const & node, std::ostream& os, size_t enclosure, test_
 {
     return visit<void, std::ostream&, size_t, test_generator::BuildProgramSetting>(node, os, enclosure, setting);
 }
-
 
 namespace visit_specializations
 {
@@ -356,9 +352,9 @@ namespace test_generator
 {
 
 export
-void serialize(last::AST const & ast, std::filesystem::path const & ouput_file)
+void serialize(last::AST const & ast, test_generator::SnippySettings const & settings)
 {
-    auto&& ofs = std::ofstream{ouput_file};
+    auto&& ofs = std::ofstream{settings.output_file};
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
     std::time_t t_c = std::chrono::system_clock::to_time_t(now);

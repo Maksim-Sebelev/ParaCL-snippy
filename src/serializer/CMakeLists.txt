@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 # =================================================================================================
 
-project(ParaCL-snippy-name-generator
+project(ParaCL-snippy-ast-serializer
     LANGUAGES CXX
     VERSION 1.0
 )
@@ -23,40 +23,29 @@ endif()
 
 # =================================================================================================
 
-set(TEST_GENERATOR_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
 # =================================================================================================
 
-add_subdirectory(
-    ${TEST_GENERATOR_SRC_DIR}/AST
-    ${CMAKE_BINARY_DIR}/subproject/ast
+set(PARACL_SNIPPY_AST_SERIALIZER_LIB ast-serializer)
+add_library(${PARACL_SNIPPY_AST_SERIALIZER_LIB})
+
+set(PARACL_SNIPPY_AST_SERIALIZER_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(PARACL_SNIPPY_AST_SERIALIZER_SRCS
+    ${PARACL_SNIPPY_AST_SERIALIZER_SRC_DIR}/serializer.cppm
 )
 
-add_subdirectory(${TEST_GENERATOR_SRC_DIR}/settings)
-add_subdirectory(${TEST_GENERATOR_SRC_DIR}/builder)
-add_subdirectory(${TEST_GENERATOR_SRC_DIR}/serializer)
-
-# =================================================================================================
-
-set(TEST_GENERATOR_EXE paracl-snippy)
-
-add_executable(${TEST_GENERATOR_EXE})
-
-target_sources(${TEST_GENERATOR_EXE}
-PRIVATE
-    ${TEST_GENERATOR_SRC_DIR}/main.cpp
+target_sources(${PARACL_SNIPPY_AST_SERIALIZER_LIB}
+PUBLIC
+    FILE_SET CXX_MODULES
+    TYPE CXX_MODULES
+    FILES
+        ${PARACL_SNIPPY_AST_SERIALIZER_SRCS}
 )
 
-target_link_libraries(${TEST_GENERATOR_EXE}
-PRIVATE
+target_link_libraries(${PARACL_SNIPPY_AST_SERIALIZER_LIB}
+PUBLIC
+    TheLast::TheLast
     test-generator-settings
-    test-generator-settings-reader
-    ast-random-builder
-    ast-serializer
 )
-
-message("${PARACL_SNIPPY_NAME_GENERATOR_LIB}")
-message("${PARACL_SNIPPY_AST_SERIALIZER_LIB}")
-message("${PARACL_SNIPPY_SETTINGS_LIB}")
 
 # =================================================================================================

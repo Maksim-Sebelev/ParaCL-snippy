@@ -18,7 +18,7 @@ module;
 export module name_generator_nametable;
 
 //---------------------------------------------------------------------------------------------------------------
-namespace test_generator::names_generator
+namespace test_generator
 {
 //---------------------------------------------------------------------------------------------------------------
 
@@ -44,6 +44,7 @@ class Nametable
 
     unique_name_id_t get_new_unique_name_id()                    const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>);
     bool             exists                (unique_name_id_t id) const;
+    bool             empty                 ()                    const;
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -69,8 +70,6 @@ void Nametable::leave_scope()
 
 unique_name_id_t Nametable::get_new_unique_name_id() const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>)
 {
-    if (scopes_.empty())
-        return 0;
     return unique_names_quant_;
 }
 
@@ -103,5 +102,18 @@ void Nametable::declare(unique_name_id_t id)
 }
 
 //---------------------------------------------------------------------------------------------------------------
-} /* namespace test_generator::names_generator */
+
+bool Nametable::empty() const
+{
+    for (auto&& scope: scopes_)
+    {
+        if (scope.empty()) continue;
+        return true;
+    }
+
+    return false;
+}
+
+//---------------------------------------------------------------------------------------------------------------
+} /* namespace test_generator */
 //---------------------------------------------------------------------------------------------------------------

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 # =================================================================================================
 
-project(ParaCL-snippy-ast-serializer
+project(ParaCL-snippy-name-generator
     LANGUAGES CXX
     VERSION 1.0
 )
@@ -21,35 +21,46 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-
 # =================================================================================================
 
-add_subdirectory(
-    ${CMAKE_SOURCE_DIR}/AST
-    ${CMAKE_BINARY_DIR}/subproject/ast
+set(PARACL_SNIPPY_SETTINGS_LIB test-generator-settings)
+add_library(${PARACL_SNIPPY_SETTINGS_LIB})
+
+set(PARACL_SNIPPY_SETTINGS_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(PARACL_SNIPPY_SETTINGS_SRCS
+    ${PARACL_SNIPPY_SETTINGS_SRC_DIR}/settings.cppm
 )
 
-# =================================================================================================
-
-set(PARACL_SNIPPY_AST_SERIALIZER_LIB ast-serializer)
-add_library(${PARACL_SNIPPY_AST_SERIALIZER_LIB})
-
-set(PARACL_SNIPPY_AST_SERIALIZER_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(PARACL_SNIPPY_AST_SERIALIZER_SRCS
-    ${PARACL_SNIPPY_AST_SERIALIZER_SRC_DIR}/serializer.cppm
-)
-
-target_sources(${PARACL_SNIPPY_AST_SERIALIZER_LIB}
+target_sources(${PARACL_SNIPPY_SETTINGS_LIB}
 PUBLIC
     FILE_SET CXX_MODULES
     TYPE CXX_MODULES
     FILES
-        ${PARACL_SNIPPY_AST_SERIALIZER_SRCS}
+        ${PARACL_SNIPPY_SETTINGS_SRCS}
 )
 
-target_link_libraries(${PARACL_SNIPPY_AST_SERIALIZER_LIB}
-PUBLIC
-    TheLast::TheLast
+# =================================================================================================
+
+set(PARACL_SNIPPY_SETTINGS_READER_LIB test-generator-settings-reader)
+add_library(${PARACL_SNIPPY_SETTINGS_READER_LIB})
+
+set(PARACL_SNIPPY_SETTINGS_READER_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(PARACL_SNIPPY_SETTINGS_READER_SRCS
+    ${PARACL_SNIPPY_SETTINGS_READER_SRC_DIR}/read-settings.cppm
 )
+
+target_sources(${PARACL_SNIPPY_SETTINGS_READER_LIB}
+PUBLIC
+    FILE_SET CXX_MODULES
+    TYPE CXX_MODULES
+    FILES
+        ${PARACL_SNIPPY_SETTINGS_READER_SRCS}
+)
+
+target_link_libraries(${PARACL_SNIPPY_SETTINGS_READER_LIB}
+PUBLIC
+    ${PARACL_SNIPPY_SETTINGS_LIB}
+)
+
 
 # =================================================================================================
