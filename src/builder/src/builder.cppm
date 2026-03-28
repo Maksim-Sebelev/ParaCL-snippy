@@ -120,11 +120,11 @@ private:
         continue_expression_probability_=
             settings_.continue_expression_max_probability * (remaining_depth / total_depth);
     }
-// depth = 0 → 0.8
-// depth = 1 → 0.6
-// depth = 2 → 0.4
-// depth = 3 → 0.2
-// depth = 4 → 0.0
+// depth = 0 => 0.8
+// depth = 1 => 0.6
+// depth = 2 => 0.4
+// depth = 3 => 0.2
+// depth = 4 => 0.0
 
     bool will_generate_new_statement()
     {

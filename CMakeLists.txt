@@ -18,7 +18,7 @@ else()
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug) # временно
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 option(PARACL_SNIPPY_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" ON)
