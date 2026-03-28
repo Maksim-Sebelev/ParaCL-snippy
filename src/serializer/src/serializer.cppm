@@ -288,7 +288,7 @@ template <>
 void visit(Return const & node, std::ostream& os, size_t enclosure, [[maybe_unused]] test_generator::BuildProgramSetting)
 {
     test_generator::write_n_tab(os, enclosure);
-    os << "return "; 
+    os << "return ";
     serialize(node.expression(), os, 0, test_generator::BuildProgramSetting::DontSeparateExpression);
     test_generator::statement_end(os);
 }

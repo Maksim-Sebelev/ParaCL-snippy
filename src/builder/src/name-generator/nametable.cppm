@@ -22,6 +22,9 @@ namespace test_generator
 {
 //---------------------------------------------------------------------------------------------------------------
 
+// using names_generator::unique_name_id_t;
+// using names_generator::Nametable;
+
 export
 using unique_name_id_t = unsigned int;
 
@@ -33,14 +36,14 @@ class Nametable
   private:
     using scopes_t = std::vector<std::unordered_set<unique_name_id_t>>;
     scopes_t scopes_;
-    std::vector<size_t> scopes_unique_names_;
+    std::vector<size_t> scopes_unique_names_; // [x] - ?
     /* here size_t is not a unique_name_id_t */
     size_t unique_names_quant_ = 0;
 
   public:
     void             new_scope             ();
     void             leave_scope           ();
-    void             declare               (unique_name_id_t id); 
+    void             declare               (unique_name_id_t id);
 
     unique_name_id_t get_new_unique_name_id()                    const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>);
     bool             exists                (unique_name_id_t id) const;
@@ -61,9 +64,13 @@ void Nametable::leave_scope()
 {
     LOGINFO("paracl: interpreter: nametable: exiting scope");
 
+    // if (scopes_.empty()) return;
+    // unique_names_quant_ -= scopes_.back().size();
+    // scopes_.pop_back(); // в одном scope создали id = 0, вышел из scope
+    //                     // считчик уменьшился и в новом scope сново содается id = 0
+
     if (scopes_.empty()) return;
-    unique_names_quant_ -= scopes_.back().size();
-    scopes_.pop_back();
+        scopes_.pop_back();
 }
 
 //---------------------------------------------------------------------------------------------------------------
