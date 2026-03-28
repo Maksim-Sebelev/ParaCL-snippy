@@ -121,9 +121,14 @@ void visit(Print const & node, std::ostream& os, size_t enclosure, test_generato
 template <>
 void visit([[maybe_unused]] Scan const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting setting)
 {
-    expression_or_statement_begin_action(os, enclosure, setting);
+    auto&& is_not_expression = test_generator::is_not_expression(setting);
+    if (is_not_expression)
+        test_generator::write_n_tab(os, enclosure);
+
     os << "?";
-    expression_or_statement_end_action(os, setting);
+
+    if (is_not_expression)
+        test_generator::statement_end(os);
 }
 
 template <>

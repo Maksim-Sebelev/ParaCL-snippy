@@ -23,6 +23,11 @@ endif()
 
 # =================================================================================================
 
+find_package(Boost REQUIRED COMPONENTS json)
+
+# =================================================================================================
+
+
 set(PARACL_SNIPPY_SETTINGS_LIB test-generator-settings)
 add_library(${PARACL_SNIPPY_SETTINGS_LIB})
 
@@ -60,7 +65,7 @@ PUBLIC
 target_link_libraries(${PARACL_SNIPPY_SETTINGS_READER_LIB}
 PUBLIC
     ${PARACL_SNIPPY_SETTINGS_LIB}
+    Boost::json
 )
-
 
 # =================================================================================================

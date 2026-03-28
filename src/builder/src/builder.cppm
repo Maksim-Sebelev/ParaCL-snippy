@@ -200,13 +200,8 @@ private:
             case Statement::PrintStmt:
                 return &AstGenerator::generate_print;
 
-            case Statement::InStmt:
-                return &AstGenerator::generate_in;
-
             case Statement::STATEMENTS_SIZE:
                 break;
-            // default:
-            //     return &AstGenerator::generate_assigment;
         }
 
         throw std::runtime_error("Invalid statement kind");

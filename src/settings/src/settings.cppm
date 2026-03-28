@@ -22,7 +22,6 @@ enum /* NOT class */ Statement : size_t
     WhileStmt,
     IfStmt,
     PrintStmt,
-    InStmt,
     AssignmentStmt,
     STATEMENTS_SIZE
 };
@@ -43,9 +42,9 @@ export
 struct SnippySettings
 {
     probability_t generate_next_statement_probability = 0.9;
-    probability_t continue_expression_max_probability = 0.5;
+    probability_t continue_expression_max_probability = 0.8;
 
-    std::array<weight_t, Statement::STATEMENTS_SIZE> statements_weights;
+    std::array<weight_t, Statement ::STATEMENTS_SIZE>  statements_weights;
     std::array<weight_t, Expression::EXPRESSIONS_SIZE> expressions_weights;
 
     std::filesystem::path output_file = "a.cl";
