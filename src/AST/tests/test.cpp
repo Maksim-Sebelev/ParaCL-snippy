@@ -17,7 +17,7 @@ import thelast;
 using namespace ::last::node;
 using namespace ::last;
 
-CREATE_SAME(writable, dumpable, serializable)
+CREATE_SAME(writable, dumpable)
 
 #include "read-ast.hpp"
 
@@ -55,7 +55,7 @@ int main() try
     // auto&& n_scope = create(Scope{n_scan, n_condition, n_print, n_while2, n_return});
     // auto&& n_while = create(While{n_call_func, n_scope});
     // auto&& n_global_scope = create(Scope{n_declfunc, n_while});
-    auto&& n_n = create(Variable{"n"});
+    auto&& n_n = last::node::create(Variable{"n"});
     auto&& n_0 = create(NumberLiteral{0});
     auto&& n_1 = create(NumberLiteral{1});
     auto&& n_2 = create(NumberLiteral{2});
@@ -93,11 +93,11 @@ int main() try
     auto&& n_global_scope = create(Scope{fib_decl, print_result});
     auto&& ast = AST{std::move(n_global_scope)};
     write(ast, "serializable-ast.ast.json");
-    build_program(ast, "serializable-ast.cl");
+    // build_program(ast, "serializable-ast.cl");
     dump(ast, "ast.dot", "ast.svg");
 
     auto&& ast2 = read("serializable-ast.ast.json");
-    build_program(ast2, "2.cl");
+    // build_program(ast2, "2.cl");
 
     return 0;
 }

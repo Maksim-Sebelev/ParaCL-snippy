@@ -1,10 +1,18 @@
 #pragma once
 
-#define SPECIALIZE_CREATE(NodeT, ...)                                                                                       \
-template <>                                                                                                                 \
-inline last::node::BasicNode last::node::create(NodeT node)                                                                 \
-{                                                                                                                           \
-    return last::node::BasicNode::Actions<__VA_ARGS__>::create(std::move(node));                                            \
+#if not defined(THELAST_EXPORT_CREATE_SPEZIALIZATIONS)
+#define THELAST_EXPORT_CREATE_SPEZIALIZATIONS
+#else /* not defined(THELAST_EXPORT_CREATE_SPEZIALIZATIONS) */
+#undef  THELAST_EXPORT_CREATE_SPEZIALIZATIONS
+#define THELAST_EXPORT_CREATE_SPEZIALIZATIONS export
+#endif /* not defined(THELAST_EXPORT_CREATE_SPEZIALIZATIONS) */
+
+#define SPECIALIZE_CREATE(NodeT, ...)                                                                                          \
+THELAST_EXPORT_CREATE_SPEZIALIZATIONS                                                                                          \
+template <>                                                                                                                    \
+inline last::node::BasicNode last::node::create(NodeT node)                                                                    \
+{                                                                                                                              \
+    return last::node::BasicNode::Actions<__VA_ARGS__>::create(std::move(node));                                               \
 }
 
 #define CREATE_SAME(...)                                                                                                       \

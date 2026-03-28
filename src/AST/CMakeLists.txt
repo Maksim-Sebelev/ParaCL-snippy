@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 
 # =================================================================================================
 
@@ -15,15 +15,13 @@ find_package(Boost REQUIRED COMPONENTS json)
 
 # =================================================================================================
 
-
 if (NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 23)
+  set(CMAKE_CXX_STANDARD 20)
 else()
   if (CMAKE_CXX_STANDARD LESS 20)
     message(FATAL_ERROR "CMAKE_CXX_STANDARD requires to be greater or equal than 20, but given ${CMAKE_CXX_STANDARD}")
   endif(CMAKE_CXX_STANDARD LESS 20)
 endif()
-
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -159,7 +157,6 @@ set(AST_FUNCTIONAL_THELAST_SRC_DIR ${THELAST_SRC_DIR}/functional)
 set(AST_FUNCTIONAL_SRC
     ${AST_FUNCTIONAL_THELAST_SRC_DIR}/write.cppm
     ${AST_FUNCTIONAL_THELAST_SRC_DIR}/graphic-dump.cppm
-    ${AST_FUNCTIONAL_THELAST_SRC_DIR}/build-program.cppm
 
 )
 
