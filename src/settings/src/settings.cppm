@@ -21,6 +21,8 @@ enum /* NOT class */ Statement : size_t
     ExpressionStmt = 0LU,
     WhileStmt,
     IfStmt,
+    PrintStm,
+    InStm,
     AssignmentStmt,
     STATEMENTS_SIZE
 };
@@ -39,13 +41,13 @@ enum /* NOT class */ Expression : size_t
 export
 struct SnippySettings
 {
-    probability_t generate_next_statement_probability;
-    probability_t continue_expression_max_probability;
+    probability_t generate_next_statement_probability = 0.3;
+    probability_t continue_expression_max_probability = 0.2;
 
-    std::array<weight_t, Statement::STATEMENTS_SIZE> statements_weights;
-    std::array<weight_t, Expression::EXPRESSIONS_SIZE> expression_weights;
+    std::array<weight_t, Statement::STATEMENTS_SIZE> statements_weights   = {1,1,1,1,1,1};
+    std::array<weight_t, Expression::EXPRESSIONS_SIZE> expression_weights = {1,1,1,1,1};
 
-    std::filesystem::path output_file;
+    std::filesystem::path output_file = "a.cl";
 };
 
 } /* namespace test_generator */

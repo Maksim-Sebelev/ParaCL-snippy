@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 
 # =================================================================================================
 
@@ -18,7 +18,26 @@ else()
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Debug) # временно
+endif()
+
+option(PARACL_SNIPPY_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" ON)
+
+if (PARACL_SNIPPY_ENABLE_SANITIZERS)
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_compile_options(
+      -g
+      -O0
+      -fno-omit-frame-pointer
+      -fsanitize=address,undefined
+    )
+
+    add_link_options(
+      -fsanitize=address,undefined
+    )
+  else()
+    message(WARNING "Sanitizers are supported only for Clang/GCC in this setup")
+  endif()
 endif()
 
 # =================================================================================================
