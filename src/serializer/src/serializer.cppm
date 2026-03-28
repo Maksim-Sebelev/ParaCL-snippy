@@ -53,7 +53,7 @@ bool is_not_expression(BuildProgramSetting setting)
 
 void expression_or_statement_begin_action(std::ostream& os, size_t enclosure, BuildProgramSetting setting)
 {
-    auto&& is_expression = (setting == BuildProgramSetting::NoEnclosure);
+    auto&& is_expression            = (setting == BuildProgramSetting::NoEnclosure);
     auto&& dont_separate_expression = (setting == BuildProgramSetting::DontSeparateExpression);
 
     if (dont_separate_expression) return;
@@ -66,7 +66,7 @@ void expression_or_statement_begin_action(std::ostream& os, size_t enclosure, Bu
 
 void expression_or_statement_end_action(std::ostream& os, BuildProgramSetting setting)
 {
-    auto&& is_expression = (setting == BuildProgramSetting::NoEnclosure);
+    auto&& is_expression            = (setting == BuildProgramSetting::NoEnclosure);
     auto&& dont_separate_expression = (setting == BuildProgramSetting::DontSeparateExpression);
 
     if (dont_separate_expression) return;
@@ -99,9 +99,9 @@ namespace visit_specializations
 {
 
 template <>
-void visit(Print const & node, std::ostream& os, size_t enclosure, [[maybe_unused]] test_generator::BuildProgramSetting)
+void visit(Print const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting setting)
 {
-    test_generator::write_n_tab(os, enclosure);
+    expression_or_statement_begin_action(os, enclosure, setting);
 
     os << "print ";
 
@@ -115,7 +115,7 @@ void visit(Print const & node, std::ostream& os, size_t enclosure, [[maybe_unuse
         }
     }
 
-    test_generator::statement_end(os);
+    expression_or_statement_end_action(os, setting);
 }
 
 template <>
@@ -132,7 +132,7 @@ void visit(Scope const & node, std::ostream& os, size_t enclosure, test_generato
     auto&& size = node.size();
 
     auto&& is_scope_after_condition = (setting == test_generator::BuildProgramSetting::ScopeLikeConditionBody);
-    auto&& is_scope_global = (setting == test_generator::BuildProgramSetting::GlobalScope);
+    auto&& is_scope_global          = (setting == test_generator::BuildProgramSetting::GlobalScope);
 
     if ((size == 0) and is_scope_after_condition)
     {
@@ -141,7 +141,7 @@ void visit(Scope const & node, std::ostream& os, size_t enclosure, test_generato
         return;
     }
 
-    auto&& need_brackets = not (((size == 1) and is_scope_after_condition) or (is_scope_global));
+    auto&& need_brackets = not (is_scope_global);
     size_t offset = static_cast<size_t>(not is_scope_global);
 
     if (need_brackets)
@@ -357,10 +357,10 @@ void serialize(last::AST const & ast, test_generator::SnippySettings const & set
     auto&& ofs = std::ofstream{settings.output_file};
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
-    std::time_t t_c = std::chrono::system_clock::to_time_t(now);
-    std::tm tm_local = *std::localtime(&t_c);
+    std::time_t t_c      = std::chrono::system_clock::to_time_t(now);
+    std::tm     tm_local = *std::localtime(&t_c);
 
-    ofs << "// Automatic generated with '" << __PRETTY_FUNCTION__ << "'\n"
+    ofs << "// Automatic generated with '" << "ParaCl-snippy" << "'\n"
         << "// " << std::put_time(&tm_local, "%Y-%m-%d %H:%M:%S") << "\n\n";
 
     last::node::serialize(ast.root(), ofs, 0, test_generator::BuildProgramSetting::GlobalScope);

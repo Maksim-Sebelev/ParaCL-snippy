@@ -45,7 +45,7 @@ struct SnippySettings
     probability_t continue_expression_max_probability = 0.2;
 
     std::array<weight_t, Statement::STATEMENTS_SIZE> statements_weights   = {1,1,1,1,1,1};
-    std::array<weight_t, Expression::EXPRESSIONS_SIZE> expression_weights = {1,1,1,1,1};
+    std::array<weight_t, Expression::EXPRESSIONS_SIZE> expression_weights = {1,0,0,0,1};
 
     std::filesystem::path output_file = "a.cl";
 };

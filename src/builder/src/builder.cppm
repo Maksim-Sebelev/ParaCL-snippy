@@ -50,7 +50,7 @@ private:
     probability_t generate_next_statement_probability_;
     probability_t continue_expression_probability_;
 
-    std::size_t statement_depth_ = 0;
+    std::size_t                  statement_depth_     = 0;
     static constexpr std::size_t max_statement_depth_ = 3;
 
     using generate_stmt_t = BasicNode (AstGenerator::*)();
@@ -58,13 +58,11 @@ private:
     BasicNode generate_new_placeholder_name()
     {
         return name_generator_.generate_new_variable();
-        // return last::node::create(test_generator::UninitializedNameDeclaration{});
     }
 
     BasicNode generate_existing_placeholder_name()
     {
         return name_generator_ .generate_existing_variable();
-        // return last::node::create(test_generator::Uninitiali777zedNameReUse{});
     }
 
     void reset_continue_expression_probability()
@@ -121,10 +119,6 @@ private:
     {
         auto weights = settings_.statements_weights;
 
-        // TODO: Кирюха потом доделает
-        weights[static_cast<std::size_t>(Statement::PrintStm)] = 0;
-        weights[static_cast<std::size_t>(Statement::InStm)]    = 0;
-
         weight_t total_weight = 0;
         for (auto w : weights)
             total_weight += w;
@@ -160,10 +154,9 @@ private:
                 return &AstGenerator::generate_in;
 
             case Statement::STATEMENTS_SIZE:
-                __builtin_unreachable();
-            // break;
-            default:
-                return &AstGenerator::generate_assigment;
+                break;
+            // default:
+            //     return &AstGenerator::generate_assigment;
         }
 
         throw std::runtime_error("Invalid statement kind");
@@ -244,16 +237,6 @@ private:
         });
     }
 
-    // BasicNode generate_print()
-    // {
-    //     throw std::runtime_error("generate_print is not implemented yet");
-    // }
-
-    // BasicNode generate_in()
-    // {
-    //     throw std::runtime_error("generate_in is not implemented yet");
-    // }
-
     BasicNode generate_expression() // первая легкаяв версия
     {
         reset_continue_expression_probability();
@@ -291,11 +274,9 @@ private:
 
             case Expression::InExpr:
                 return generate_in();
-                //throw std::runtime_error("InExpr is not implemented yet");
 
             case Expression::PrintExpr:
                 return generate_print();
-                // throw std::runtime_error("PrintExpr is not implemented yet");
 
             case Expression::EXPRESSIONS_SIZE:
                 break;
@@ -359,7 +340,6 @@ public:
         auto root = generate_scope();
 
         test_generator::NameGenerator name_generator(random_);
-        // test_generator::name_inserter::insert_names(root, name_generator);
 
         return last::AST(std::move(root));
     }
