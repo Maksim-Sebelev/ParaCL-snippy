@@ -21,8 +21,8 @@ enum /* NOT class */ Statement : size_t
     ExpressionStmt = 0LU,
     WhileStmt,
     IfStmt,
-    PrintStm,
-    InStm,
+    PrintStmt,
+    InStmt,
     AssignmentStmt,
     STATEMENTS_SIZE
 };
@@ -39,15 +39,34 @@ enum /* NOT class */ Expression : size_t
 };
 
 export
+
 struct SnippySettings
 {
-    probability_t generate_next_statement_probability = 0.3;
-    probability_t continue_expression_max_probability = 0.2;
+    probability_t generate_next_statement_probability = 0.9;
+    probability_t continue_expression_max_probability = 0.5;
 
-    std::array<weight_t, Statement::STATEMENTS_SIZE> statements_weights   = {1,1,1,1,1,1};
-    std::array<weight_t, Expression::EXPRESSIONS_SIZE> expression_weights = {1,0,0,0,1};
+    std::array<weight_t, Statement::STATEMENTS_SIZE> statements_weights;
+    std::array<weight_t, Expression::EXPRESSIONS_SIZE> expressions_weights;
 
     std::filesystem::path output_file = "a.cl";
+
+    SnippySettings()
+    {
+        // statements weights
+        statements_weights[Statement::ExpressionStmt] = 1;
+        statements_weights[Statement::WhileStmt     ] = 1;
+        statements_weights[Statement::IfStmt        ] = 1;
+        statements_weights[Statement::AssignmentStmt] = 1;
+        statements_weights[Statement::PrintStmt     ] = 1;
+
+        // expressions weights
+        expressions_weights[Expression::AssignmentExpr    ] = 1;
+        expressions_weights[Expression::BinaryOperatorExpr] = 1;
+        expressions_weights[Expression::UnaryOperatorExpr ] = 1;
+        expressions_weights[Expression::InExpr            ] = 1;
+        expressions_weights[Expression::PrintExpr         ] = 1;
+    }
 };
+
 
 } /* namespace test_generator */

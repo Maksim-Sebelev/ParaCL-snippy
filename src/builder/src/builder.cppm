@@ -50,8 +50,13 @@ private:
     probability_t generate_next_statement_probability_;
     probability_t continue_expression_probability_;
 
+    // будет приходить из парсера ===========================
     std::size_t                  statement_depth_     = 0;
     static constexpr std::size_t max_statement_depth_ = 3;
+
+                     std::size_t expression_depth_     = 0;
+    static constexpr std::size_t max_expression_depth_ = 3;
+    // =======================================================
 
     using generate_stmt_t = BasicNode (AstGenerator::*)();
 
@@ -65,6 +70,28 @@ private:
         return name_generator_ .generate_existing_variable();
     }
 
+    BasicNode generate_terminal_expression()
+    {
+        std::uniform_int_distribution<int> kind_dist(0, 2);
+        auto kind = kind_dist(random_);
+
+        switch(kind)
+        {
+            case 0:
+                return last::node::create(last::node::NumberLiteral{
+                    std::uniform_int_distribution<int>(-10, 10)(random_)
+                });
+
+            case 1:
+                return generate_new_placeholder_name();
+
+            case 2:
+                return generate_existing_placeholder_name();
+        }
+
+        throw std::runtime_error("Invalid terminal expression kind");
+    }
+
     void reset_continue_expression_probability()
     {
         continue_expression_probability_ = settings_.continue_expression_max_probability;
@@ -72,7 +99,7 @@ private:
 
     void update_continue_expression_probability()
     {
-        continue_expression_probability_ *= 0.5;
+        continue_expression_probability_ *= 0.5; // TODO: генерация числа от 0 до continue_expression_max_probability и она должна обновлять на каждом statment
     }
 
     bool will_generate_new_statement()
@@ -86,7 +113,6 @@ private:
         auto dist = std::bernoulli_distribution{continue_expression_probability_};
         return dist(random_);
     }
-
 
 public:
     AstGenerator(SnippySettings const& settings)
@@ -147,10 +173,10 @@ private:
             case Statement::AssignmentStmt:
                 return &AstGenerator::generate_assigment;
 
-            case Statement::PrintStm:
+            case Statement::PrintStmt:
                 return &AstGenerator::generate_print;
 
-            case Statement::InStm:
+            case Statement::InStmt:
                 return &AstGenerator::generate_in;
 
             case Statement::STATEMENTS_SIZE:
@@ -237,26 +263,31 @@ private:
         });
     }
 
-    BasicNode generate_expression() // первая легкаяв версия
+    BasicNode generate_expression()
     {
         reset_continue_expression_probability();
+        expression_depth_ = 0;
+        return generate_expression_impl();
+    }
+
+    BasicNode generate_expression_impl()
+    {
+        if (expression_depth_ >= max_expression_depth_)
+            return generate_terminal_expression();
 
         if (!will_continue_expression())
-        {
-            std::uniform_int_distribution<int> dist(-10, 10);
-            return last::node::create(last::node::NumberLiteral{dist(random_)});
-        }
+            return generate_terminal_expression();
 
         weight_t total_weight = 0;
-        for (auto w : settings_.expression_weights)
+        for (auto w : settings_.expressions_weights)
             total_weight += w;
 
         if (total_weight == 0)
             throw std::runtime_error("All expression weights are zero");
 
         std::discrete_distribution<std::size_t> dist(
-            settings_.expression_weights.begin(),
-            settings_.expression_weights.end()
+            settings_.expressions_weights.begin(),
+            settings_.expressions_weights.end()
         );
 
         auto index = dist(random_);
@@ -287,8 +318,23 @@ private:
 
     BasicNode generate_binary_operator()
     {
-        auto lhs = last::node::create(last::node::NumberLiteral{1});
-        auto rhs = last::node::create(last::node::NumberLiteral{2});
+        if (expression_depth_ >= max_expression_depth_)
+            return generate_terminal_expression();
+
+        ++expression_depth_;
+
+        BasicNode lhs;
+        BasicNode rhs;
+
+        if (std::bernoulli_distribution(0.7)(random_))
+            lhs = generate_expression_impl();
+        else
+            lhs = generate_terminal_expression();
+
+        if (std::bernoulli_distribution(0.3)(random_))
+            rhs = generate_expression_impl();
+        else
+            rhs = generate_terminal_expression();
 
         std::array<last::node::BinaryOperator::BinaryOperatorT, 6> ops =
         {
@@ -304,6 +350,7 @@ private:
         auto op = ops[dist(random_)];
 
         update_continue_expression_probability();
+        --expression_depth_;
 
         return last::node::create(last::node::BinaryOperator{
             op,
@@ -314,7 +361,16 @@ private:
 
     BasicNode generate_unary_operator()
     {
-        auto arg = last::node::create(last::node::NumberLiteral{1});
+        if (expression_depth_ >= max_expression_depth_)
+            return generate_terminal_expression();
+
+        ++expression_depth_;
+
+        BasicNode arg;
+        if (std::bernoulli_distribution(0.5)(random_))
+            arg = generate_expression_impl();
+        else
+            arg = generate_terminal_expression();
 
         std::array<last::node::UnaryOperator::UnaryOperatorT, 3> ops =
         {
@@ -327,6 +383,7 @@ private:
         auto op = ops[dist(random_)];
 
         update_continue_expression_probability();
+        --expression_depth_;
 
         return last::node::create(last::node::UnaryOperator{
             op,
