@@ -27,7 +27,7 @@ enum /* NOT class */ Statement : size_t
 };
 
 export
-enum /* NOT class */ Expression : size_t
+enum /* NOT class */ Expression : size_t // TODO: сделать числа и перемннеые 
 {
     AssignmentExpr = 0LU,
     BinaryOperatorExpr,
@@ -47,7 +47,7 @@ struct SnippySettings
     std::array<weight_t, Statement ::STATEMENTS_SIZE>  statements_weights;
     std::array<weight_t, Expression::EXPRESSIONS_SIZE> expressions_weights;
 
-    std::filesystem::path output_file = "a.cl";
+    std::filesystem::path output_file = "a.cl"; // TODO: убрать в какие-то более подходящие для этого место
 
     SnippySettings()
     {

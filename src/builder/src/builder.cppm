@@ -52,7 +52,7 @@ private:
 
     // будет приходить из парсера ===========================
                      std::size_t statement_depth_      = 0;
-    static constexpr std::size_t max_statement_depth_  = 3;
+    static constexpr std::size_t max_statement_depth_  = 3; // TODO: убрать из хардкода их как-то аккуратно
 
                      std::size_t expression_depth_     = 0;
     static constexpr std::size_t max_expression_depth_ = 4;
@@ -70,7 +70,7 @@ private:
         return name_generator_ .generate_existing_variable();
     }
 
-    BasicNode generate_terminal_expression()
+    BasicNode generate_terminal_expression() // TODO: тоже должны испольоваться веса, чтобы у нас прии расширении он не затиралось
     {
         std::uniform_int_distribution<int> kind_dist(0, 2);
         auto kind = kind_dist(random_);
@@ -97,12 +97,6 @@ private:
         expression_depth_ = 0;
         continue_expression_probability_ = settings_.continue_expression_max_probability;
     }
-
-    // void update_continue_expression_probability()
-    // {
-    //     continue_expression_probability_ *= 0.5;
-    //     // TODO: генерация числа от 0 до continue_expression_max_probability и она должна обновлять на каждом statment
-    // }
 
     void update_continue_expression_probability() // TODO: сделать по нормальному, когда параметры будут не захардкожены
     {
@@ -211,7 +205,7 @@ private:
     BasicNode generate_while()
     {
         if (statement_depth_ >= max_statement_depth_)
-            return generate_assigment();
+            return generate_assigment(); // TODO: если в statmrnt у нас expr будет 0, то бует ошибка. надо исправить 
 
         ++statement_depth_;
 
