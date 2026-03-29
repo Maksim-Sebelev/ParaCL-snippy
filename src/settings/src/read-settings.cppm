@@ -1,5 +1,6 @@
 module;
 
+#include <cstddef>
 #include <cstdint>
 #include <array>
 #include <string>
@@ -64,7 +65,7 @@ void read_statements_weights(boost::json::value const & jv, SnippySettings& sett
     if (auto val = weights.if_contains(if_name))
         settings.statements_weights[Statement::IfStmt] = extract_weight(*val, if_name);
 
-    auto&& assign_name = "assign";
+    auto&& assign_name = "declaration";
     if (auto val = weights.if_contains(assign_name))
         settings.statements_weights[Statement::VariableDeclarationStmt] = extract_weight(*val, assign_name);
 
@@ -106,6 +107,14 @@ void read_expressions_weights(boost::json::value const & jv, SnippySettings& set
     auto&& print_name = "print";
     if (auto val = weights.if_contains(print_name))
         settings.expressions_weights[Expression::PrintExpr] = extract_weight(*val, print_name);
+
+    auto&& var_name = "variable";
+    if (auto val = weights.if_contains(var_name))
+        settings.expressions_weights[Expression::VariableExpr] = extract_weight(*val, var_name);
+
+    auto&& num_name = "number";
+    if (auto val = weights.if_contains(num_name))
+        settings.expressions_weights[Expression::NumberLiteralExpr] = extract_weight(*val, num_name);
 }
 
 void read_generate_next_statement_probability(boost::json::value const & jv, SnippySettings& settings)
@@ -139,19 +148,6 @@ void read_generate_next_statement_probability(boost::json::value const & jv, Sni
         }
         throw std::runtime_error("Field '" + std::string(key) + "' must be 0, 1, or a floating point number between 0 and 1.");
     }
-
-    if (next_stmt_p_val.is_uint64())
-    {
-        auto&& value = next_stmt_p_val.as_uint64();
-        if ((value == 0) or (value == 1))
-        {
-            settings.generate_next_statement_probability = static_cast<probability_t>(value);
-            return;
-        }
-        throw std::runtime_error("Field '" + std::string(key) + "' must be 0, 1, or a floating point number between 0 and 1.");
-    }
-
-    throw std::runtime_error("Field '" + std::string(key) + "' must be a number (0, 1, or between 0 and 1).");
 }
 
 void read_continue_expression_max_probability(boost::json::value const & jv, SnippySettings& settings)
@@ -184,21 +180,49 @@ void read_continue_expression_max_probability(boost::json::value const & jv, Sni
         }
         throw std::runtime_error("Field '" + std::string(key) + "' must be 0, 1, or a floating point number between 0 and 1.");
     }
-
-    if (next_stmt_p_val.is_uint64())
-    {
-        auto&& value = next_stmt_p_val.as_uint64();
-        if ((value == 0) or (value == 1))
-        {
-            settings.continue_expression_max_probability = static_cast<probability_t>(value);
-            return;
-        }
-        throw std::runtime_error("Field '" + std::string(key) + "' must be 0, 1, or a floating point number between 0 and 1.");
-    }
-
-    throw std::runtime_error("Field '" + std::string(key) + "' must be a number (0, 1, or between 0 and 1).");
 }
 
+void read_max_statement_depth(boost::json::value const & jv, SnippySettings& settings)
+{
+    auto&& root_obj = jv.as_object();
+
+    auto&& key = "max-statement-depth";
+    if (not root_obj.contains(key)) return;
+
+    auto&& json_val = root_obj.at(key);
+
+    if (json_val.is_int64())
+    {
+        auto&& value = json_val.as_int64();
+        if (value >= 0)
+        {
+            settings.max_statement_depth = static_cast<size_t>(value);
+            return;
+        }
+        throw std::runtime_error("Field '" + std::string(key) + "' must non negative integer.");
+    }
+}
+
+void read_max_expression_depth(boost::json::value const & jv, SnippySettings& settings)
+{
+    auto&& root_obj = jv.as_object();
+
+    auto&& key = "max-expression-depth";
+    if (not root_obj.contains(key)) return;
+
+    auto&& json_value = root_obj.at(key);
+
+    if (json_value.is_int64())
+    {
+        auto&& value = json_value.as_int64();
+        if (value >= 0)
+        {
+            settings.max_expression_depth = static_cast<size_t>(value);
+            return;
+        }
+        throw std::runtime_error("Field '" + std::string(key) + "' must non negative integer.");
+    }
+}
 
 SnippySettings read_settings_(std::string_view json_data)
 {

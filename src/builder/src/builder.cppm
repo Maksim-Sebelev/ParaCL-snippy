@@ -7,6 +7,7 @@ module;
 #include <stdexcept>
 #include <vector>
 #include <array>
+#include <cassert>
 #include <iostream>
 
 #include "create-basic-node.hpp"
@@ -15,7 +16,6 @@ export module ast_builder;
 
 export import thelast;
 export import test_generator_settings;
-import name_generator;
 import name_generator;
 import ast_serializer;
 
@@ -51,64 +51,155 @@ private:
     probability_t generate_next_statement_probability_;
     probability_t continue_expression_probability_;
 
-    // будет приходить из парсера ===========================
-                     std::size_t statement_depth_      = 0;
-    static constexpr std::size_t max_statement_depth_  = 3;
+    std::size_t statement_depth_  = 0LU;
+    std::size_t expression_depth_ = 0LU;
 
-                     std::size_t expression_depth_     = 0;
-    static constexpr std::size_t max_expression_depth_ = 4;
-    // =======================================================
+private:
+    void check_configuration()
+    {
+        auto&& has_statement_weight = false;
+        for (auto&& w : settings_.statements_weights)
+        {
+            if (w != 0)
+            {
+                has_statement_weight = true;
+                break;
+            }
+        }
 
-    using generate_stmt_t = BasicNode (AstGenerator::*)();
+        if (!has_statement_weight)
+            throw std::runtime_error("All statement weights are zero. Incorrect generator configuration.");
+
+        auto&& has_expression_weight = false;
+        for (auto&& w : settings_.expressions_weights)
+        {
+            if (w != 0)
+            {
+                has_expression_weight = true;
+                break;
+            }
+        }
+
+        if (!has_expression_weight)
+            throw std::runtime_error("All expression weights are zero. Incorrect generator configuration.");
+
+        auto&& has_terminal_expression =
+            settings_.expressions_weights[Expression::NumberLiteralExpr] != 0 or
+            settings_.expressions_weights[Expression::InExpr           ] != 0;
+
+        if (not has_terminal_expression)
+            throw std::runtime_error(
+                "Both VariableExpr and NumberLiteralExpr weights are zero.\n"
+                "Terminal expressions are disabled, so the generator is incorrectly configured.\n"
+                "Also, only enabled Variables are useless, cause it`s impossible to use only variables, without other terminal expressions."
+            );
+    }
 
     BasicNode generate_terminal_expression()
     {
-        auto&& max_kind = 1;
-        std::uniform_int_distribution<int> kind_dist(0, max_kind);
-        auto&& kind = kind_dist(random_);
+        auto&& expressions = std::vector<Expression>{};
+        auto&& weights     = std::vector<weight_t>{};
 
-        switch(kind)
+        auto&& add_expression_if_its_possible = [&](Expression id) -> void
         {
-            case 0:
+            if (settings_.expressions_weights[id] == 0) return;
+            if ((id == Expression::VariableExpr) and name_generator_.empty()) return;
+
+            expressions.push_back(id);
+            weights.push_back(settings_.expressions_weights[id]);
+        };
+
+        add_expression_if_its_possible(Expression::NumberLiteralExpr);
+        add_expression_if_its_possible(Expression::VariableExpr);
+        add_expression_if_its_possible(Expression::InExpr);
+
+        assert(not expressions.empty());
+
+        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& chosen = expressions[dist(random_)];
+
+        switch (chosen)
+        {
+            case Expression::NumberLiteralExpr:
                 return generate_number();
 
-            case 1:
-            {
-                if (not name_generator_.empty())
-                    return name_generator_.generate_existing_variable();
+            case Expression::VariableExpr:
+                return generate_variable();
 
-                return generate_number();
-            }
-            
-            // case 2: return generate_in();
+            case Expression::InExpr:
+                return generate_in();
+
+            default:
+                throw std::runtime_error("Invalid terminal expression selected");
         }
-        throw std::runtime_error("Invalid terminal expression kind");
+        __builtin_unreachable();
+    }
+
+
+    BasicNode generate_unterminal_expression()
+    {
+        auto&& expressions = std::vector<Expression>{};
+        auto&& weights     = std::vector<weight_t>{};
+
+        auto&& add_expression_if_its_possible = [&](Expression id) -> void
+        {
+            if (settings_.expressions_weights[id] == 0) return;
+
+            expressions.push_back(id);
+            weights.push_back(settings_.expressions_weights[id]);
+        };
+
+        add_expression_if_its_possible(Expression::BinaryOperatorExpr);
+        add_expression_if_its_possible(Expression::UnaryOperatorExpr);
+        add_expression_if_its_possible(Expression::PrintExpr);
+        add_expression_if_its_possible(Expression::AssignmentExpr);
+
+        if (expressions.empty())
+            return BasicNode{};
+
+        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& chosen = expressions[dist(random_)];
+
+        switch (chosen)
+        {
+            case Expression::BinaryOperatorExpr:
+                return generate_binary_operator();
+
+            case Expression::UnaryOperatorExpr:
+                return generate_unary_operator();
+
+            case Expression::PrintExpr:
+                return generate_print();
+
+            case Expression::AssignmentExpr:
+                return generate_variable_declaration();
+
+            default:
+                throw std::runtime_error("Invalid terminal expression selected");
+        }
+        return BasicNode{};
     }
 
     void reset_continue_expression_probability()
     {
-        expression_depth_ = 0;
-        continue_expression_probability_ = settings_.continue_expression_max_probability;
+        expression_depth_                = 0;
+        std::uniform_real_distribution<probability_t> dist(0.0, settings_.continue_expression_max_probability);
+        continue_expression_probability_ = dist(random_);
     }
 
-    // void update_continue_expression_probability()
-    // {
-    //     continue_expression_probability_ *= 0.5;
-    //     // TODO: генерация числа от 0 до continue_expression_max_probability и она должна обновлять на каждом statment
-    // }
 
     void update_continue_expression_probability() // TODO: сделать по нормальному, когда параметры будут не захардкожены
     {
-        if (expression_depth_ >= max_expression_depth_)
+        if (expression_depth_ >= settings_.max_expression_depth)
         {
             continue_expression_probability_ = 0.0;
             return;
         }
 
         auto remaining_depth =
-            static_cast<double>(max_expression_depth_ - expression_depth_);
+            static_cast<double>(settings_.max_expression_depth - expression_depth_);
         auto total_depth     =
-            static_cast<double>(max_expression_depth_);
+            static_cast<double>(settings_.max_expression_depth);
 
         continue_expression_probability_=
             settings_.continue_expression_max_probability * (remaining_depth / total_depth);
@@ -134,43 +225,78 @@ private:
 public:
     AstGenerator(SnippySettings const& settings)
         : settings_(settings),
-          random_(std::random_device{}()),
-          name_generator_(random_),
-          generate_next_statement_probability_(settings_.generate_next_statement_probability),
-          continue_expression_probability_    (settings_.continue_expression_max_probability)
-        {
-            auto&& weights = settings.statements_weights;
-            for (auto&& w : weights)
-                if (w != 0) return;
-
-            throw std::runtime_error("All statement weights are zero. What do you want from us?");
-        }
+        random_(std::random_device{}()),
+        name_generator_(random_),
+        generate_next_statement_probability_(settings_.generate_next_statement_probability),
+        continue_expression_probability_    (settings_.continue_expression_max_probability)
+    {
+        check_configuration();
+    }
 
 private:
     BasicNode generate_scope()
     {
+        if (statement_depth_ > settings_.max_statement_depth)
+            return generate_print();
+
         name_generator_.new_scope();
-    
+        ++statement_depth_;
+
         auto&& statements = std::vector<BasicNode>{};
-    
         do
         {
             statements.push_back(generate_statement());
         }
         while (will_generate_new_statement());
-    
+
         name_generator_.leave_scope();
+        --statement_depth_;
 
         return last::node::create(last::node::Scope{std::move(statements)});
     }
 
-    BasicNode generate_statement()
+
+    BasicNode generate_not_scoped_statement()
     {
-        auto generator = select_random_stmt();
-        return (this->*generator)();
+        auto&& statements = std::vector<Statement>{};
+        auto&& weights     = std::vector<weight_t>{};
+
+        auto&& add_expression_if_its_possible = [&](Statement id) -> void
+        {
+            if (settings_.statements_weights[id] == 0) return;
+
+            statements.push_back(id);
+            weights.push_back(settings_.statements_weights[id]);
+        };
+
+        add_expression_if_its_possible(Statement::PrintStmt);
+        add_expression_if_its_possible(Statement::VariableDeclarationStmt);
+        add_expression_if_its_possible(Statement::ExpressionStmt);
+
+        if (not statements.empty())
+            throw std::runtime_error("Requests not scoped statement, but no one is enabled");
+
+        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& chosen = statements[dist(random_)];
+
+        switch (chosen)
+        {
+            case Statement::PrintStmt:
+                return generate_print();
+
+            case Statement::VariableDeclarationStmt:
+                return generate_variable_declaration();
+
+            case Statement::ExpressionStmt:
+                return generate_expression();
+
+            default:
+                throw std::runtime_error("Invalid terminal expression selected");
+        }
+        __builtin_unreachable();
     }
 
-    generate_stmt_t select_random_stmt()
+    BasicNode generate_statement()
     {
         auto&& weights = settings_.statements_weights;
 
@@ -179,33 +305,33 @@ private:
             weights.end()
         );
 
-        auto&& index = dist(random_);
+        auto&& selected_id = static_cast<Statement>(dist(random_));
 
-        switch (static_cast<Statement>(index))
+        switch (selected_id)
         {
             case Statement::ExpressionStmt:
-                return &AstGenerator::generate_expression;
+                return generate_expression();
 
             case Statement::WhileStmt:
-                return &AstGenerator::generate_while;
+                return generate_while();
 
             case Statement::IfStmt:
-                return &AstGenerator::generate_if;
+                return generate_if();
 
             case Statement::VariableDeclarationStmt:
-                return &AstGenerator::generate_variable_declaration;
+                return generate_variable_declaration();
 
             case Statement::PrintStmt:
-                return &AstGenerator::generate_print;
+                return generate_print();
 
             case Statement::ScopeStmt:
-                return &AstGenerator::generate_scope;
+                return generate_scope();
 
 #if not defined(NDEBUG)
             case Statement::STATEMENTS_SIZE:
                 throw std::runtime_error("Statement::STATEMENTS_SIZE is unexpected here.");
             default:
-                throw std::runtime_error("Undefined statement id: " + std::to_string(index));
+                throw std::runtime_error("Undefined statement id: " + std::to_string(selected_id));
 #else /* not defined(NDEBUG) */
             default:
                 __builtin_unreachable();
@@ -223,15 +349,11 @@ private:
 private:
     BasicNode generate_while()
     {
-        if (statement_depth_ >= max_statement_depth_)
-            return generate_expression();
-
-        ++statement_depth_;
+        if (statement_depth_ >= settings_.max_statement_depth)
+            return generate_not_scoped_statement();
 
         auto condition = generate_expression();
         auto body      = generate_scope();
-
-        --statement_depth_;
 
         return last::node::create(last::node::While{
             std::move(condition),
@@ -241,15 +363,11 @@ private:
 
     BasicNode generate_if()
     {
-        if (statement_depth_ >= max_statement_depth_)
-            return generate_expression();
-
-        ++statement_depth_;
+        if (statement_depth_ >= settings_.max_statement_depth)
+            return generate_not_scoped_statement();
 
         auto condition = generate_expression();
         auto body      = generate_scope();
-
-        --statement_depth_;
 
         auto if_node = last::node::create(last::node::If{
             std::move(condition),
@@ -261,11 +379,12 @@ private:
 
     BasicNode generate_variable_declaration()
     {
-        std::uniform_int_distribution<int> kind_dist(0, 1);
-        auto&& kind = kind_dist(random_);
-        auto&& variable = (kind == 0) ? (name_generator_.generate_new_variable()) : (name_generator_.generate_absolute_new_variable());
-        auto&& variable_id = name_generator_.get_new_unique_name_id();
-        auto&& value = generate_expression();
+        auto&& kind_dist    = std::uniform_int_distribution<int> (0, 10);
+        auto&& kind         = kind_dist(random_); kind = 1;
+        auto&& new_variable = (kind == 0);
+        auto&& variable     = (new_variable) ? name_generator_.generate_new_variable () : name_generator_.generate_absolute_new_variable ();
+        auto&& variable_id  = (new_variable) ? name_generator_.get_new_unique_name_id() : name_generator_.get_absolute_new_unique_name_id();
+        auto&& value        = generate_expression();
 
         /* we must check exists variable or not, cause situations like:
             var_0 = (var_0 = 1);
@@ -303,62 +422,37 @@ private:
         return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
     }
 
+    BasicNode generate_variable()
+    {
+        if (name_generator_.empty()) throw std::runtime_error("Requests generation of variable when exists no variables yet");
+        return name_generator_.generate_existing_variable();
+    }
+
+
     BasicNode generate_expression()
     {
         reset_continue_expression_probability();
-        expression_depth_ = 0;
         return generate_expression_impl();
     }
 
     BasicNode generate_expression_impl()
     {
-        if (expression_depth_ >= max_expression_depth_)
+        auto&& cut_off_expression = (not will_continue_expression()) or (expression_depth_ >= settings_.max_expression_depth);
+
+        if (cut_off_expression)
             return generate_terminal_expression();
 
-        if (!will_continue_expression())
-            return generate_terminal_expression();
-
-        weight_t total_weight = 0;
-        for (auto w : settings_.expressions_weights)
-            total_weight += w;
-
-        if (total_weight == 0)
-            throw std::runtime_error("All expression weights are zero");
-
-        std::discrete_distribution<std::size_t> dist(
-            settings_.expressions_weights.begin(),
-            settings_.expressions_weights.end()
-        );
-
-        auto index = dist(random_);
-
-        switch (static_cast<Expression>(index))
-        {
-            case Expression::AssignmentExpr:
-                return generate_variable_declaration();
-
-            case Expression::BinaryOperatorExpr:
-                return generate_binary_operator();
-
-            case Expression::UnaryOperatorExpr:
-                return generate_unary_operator();
-
-            case Expression::InExpr:
-                return generate_in();
-
-            case Expression::PrintExpr:
-                return generate_print();
-
-            case Expression::EXPRESSIONS_SIZE:
-                break;
-        }
-
-        throw std::runtime_error("Invalid expression kind");
+        /* if (not unterminal_expression) - exists no unterminal expression with positive weights,
+           so we can only generate terminal expression */
+        auto&& unterminal_expression = generate_unterminal_expression();
+        if (unterminal_expression) return unterminal_expression;
+    
+        return generate_terminal_expression();
     }
 
     BasicNode generate_binary_operator()
     {
-        if (expression_depth_ >= max_expression_depth_)
+        if (expression_depth_ >= settings_.max_expression_depth)
             return generate_terminal_expression();
 
         ++expression_depth_;
@@ -366,12 +460,12 @@ private:
         BasicNode lhs;
         BasicNode rhs;
 
-        if (std::bernoulli_distribution(0.7)(random_))
+        if (will_continue_expression())
             lhs = generate_expression_impl();
         else
             lhs = generate_terminal_expression();
 
-        if (std::bernoulli_distribution(0.3)(random_))
+        if (will_continue_expression())
             rhs = generate_expression_impl();
         else
             rhs = generate_terminal_expression();
@@ -401,13 +495,13 @@ private:
 
     BasicNode generate_unary_operator()
     {
-        if (expression_depth_ >= max_expression_depth_)
+        if (expression_depth_ >= settings_.max_expression_depth)
             return generate_terminal_expression();
 
         ++expression_depth_;
 
         BasicNode arg;
-        if (std::bernoulli_distribution(0.5)(random_))
+        if (will_continue_expression())
             arg = generate_expression_impl();
         else
             arg = generate_terminal_expression();
@@ -436,7 +530,7 @@ public:
     {
         auto root = generate_scope();
 
-        test_generator::NameGenerator name_generator(random_);
+        // test_generator::NameGenerator name_generator(random_);
 
         return last::AST(std::move(root));
     }
@@ -449,4 +543,3 @@ last::AST generate_random_ast(SnippySettings const & settings)
 }
 
 } /* namespace test_generator */
-

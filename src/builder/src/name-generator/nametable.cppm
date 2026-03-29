@@ -51,6 +51,8 @@ class Nametable
     bool             exists                (unique_name_id_t id) const;
     bool             empty                 ()                    const;
 
+    std::vector<unique_name_id_t> get_existing_variables() const;
+
     friend void dump(Nametable const & nt)
     {
         std::cout << "Nametable dump\n{\n";
@@ -90,19 +92,17 @@ void Nametable::leave_scope()
     if (not back.empty())
         unique_names_at_all_time_quant_is_greater_than_unique_name_id = true;
 
-    // auto&& counter = 0LU;
+    auto&& counter = 0LU;
 
-    // for (auto&& name: back)
-    // {
-    //     if (name >= unique_name_id_) continue;
-    //     ++counter;
-    // }
+    for (auto&& name: back)
+    {
+        if (name >= unique_name_id_) continue;
+        ++counter;
+    }
 
-    unique_name_id_ -= back.size();
-    // unique_name_id_ -= counter;
+    unique_name_id_ -= counter;
     scopes_.pop_back(); // в одном scope создали id = 0, вышел из scope
                         // считчик уменьшился и в новом scope сново содается id = 0
-    
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ void Nametable::declare(unique_name_id_t id)
 
     if ((unique_name_id_ == unique_names_at_all_time_quant_) or (id < unique_names_at_all_time_quant_))
         ++unique_name_id_;
-    else { assert(0); }
+
     if (unique_names_at_all_time_quant_ < unique_name_id_)
         unique_names_at_all_time_quant_ = unique_name_id_;
 }
@@ -163,6 +163,19 @@ bool Nametable::empty() const
     }
 
     return true;
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+std::vector<unique_name_id_t> Nametable::get_existing_variables() const
+{
+    auto&& existing_variables = std::vector<unique_name_id_t>{};
+    existing_variables.reserve(unique_name_id_);
+
+    for (auto&& scope: scopes_)
+        existing_variables.insert(existing_variables.end(), scope.begin(), scope.end());
+
+    return existing_variables;
 }
 
 //---------------------------------------------------------------------------------------------------------------

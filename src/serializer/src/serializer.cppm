@@ -242,7 +242,9 @@ void visit(BinaryOperator const & node, std::ostream& os, size_t enclosure, test
 template <>
 void visit(UnaryOperator const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting setting)
 {
-    expression_or_statement_begin_action(os, enclosure, setting);
+    auto&& is_not_expression = test_generator::is_not_expression(setting);
+    if (is_not_expression)
+        test_generator::write_n_tab(os, enclosure);
 
     switch (node.type())
     {
@@ -254,7 +256,8 @@ void visit(UnaryOperator const & node, std::ostream& os, size_t enclosure, test_
 
     serialize(node.arg(), os, enclosure, test_generator::BuildProgramSetting::NoEnclosure);
 
-    expression_or_statement_end_action(os, setting);
+    if (is_not_expression)
+        test_generator::statement_end(os);
 }
 
 template <>

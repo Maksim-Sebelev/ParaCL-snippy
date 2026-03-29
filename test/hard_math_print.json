@@ -1,22 +1,22 @@
 {
     "statements-weights": {
         "declaration": 0,
-        "while": 2,
+        "while": 0,
         "expression": 0,
-        "if": 3,
-        "print": 5,
+        "if": 0,
+        "print": 1,
         "scope": 0
     },
     "expressions-weights": {
         "binop": 15,
-        "unop": 3,
+        "unop": 15,
         "print": 0,
         "in": 0,
         "variable": 0,
         "number": 1
     },
-    "next-stmt-p": 0.9,
-    "continue-expr-max-p": 0.9,
+    "next-stmt-p": 0.999,
+    "continue-expr-max-p": 0.99999,
     "max-expression-depth": 100,
     "max-statement-depth": 7
 }

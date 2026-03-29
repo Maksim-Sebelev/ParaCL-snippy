@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) try
     auto&& settings = (argc == 2) ? test_generator::read_settings(argv[1]) : test_generator::SnippySettings{};
     auto&& random_ast = test_generator::generate_random_ast(settings);
     test_generator::serialize(random_ast, settings);
-    last::dump(random_ast, "ast.dot", "ast.svg");
+    // last::dump(random_ast, "ast.dot", "ast.svg");
     return EXIT_SUCCESS;
 }
 catch (std::exception const & e)

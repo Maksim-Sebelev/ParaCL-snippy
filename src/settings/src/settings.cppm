@@ -33,6 +33,8 @@ enum /* NOT class */ Expression : size_t
     AssignmentExpr = 0LU,
     BinaryOperatorExpr,
     UnaryOperatorExpr,
+    VariableExpr,
+    NumberLiteralExpr,
     InExpr,
     PrintExpr,
     EXPRESSIONS_SIZE
@@ -49,6 +51,9 @@ struct SnippySettings
 
     std::filesystem::path output_file = "a.cl";
 
+    size_t max_statement_depth = 7;
+    size_t max_expression_depth = 100;
+
     SnippySettings()
     {
         // statements weights
@@ -62,6 +67,8 @@ struct SnippySettings
         expressions_weights[Expression::AssignmentExpr       ] = 1;
         expressions_weights[Expression::BinaryOperatorExpr   ] = 1;
         expressions_weights[Expression::UnaryOperatorExpr    ] = 1;
+        expressions_weights[Expression::VariableExpr         ] = 1;
+        expressions_weights[Expression::NumberLiteralExpr    ] = 1;
         expressions_weights[Expression::InExpr               ] = 1;
         expressions_weights[Expression::PrintExpr            ] = 1;
     }

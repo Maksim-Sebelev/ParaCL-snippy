@@ -40,6 +40,8 @@ private:
     std::mt19937 &rng_;
 
 private:
+    using Nametable::get_existing_variables;
+
 public:
     using Nametable::get_new_unique_name_id;
     using Nametable::get_absolute_new_unique_name_id;
@@ -55,7 +57,12 @@ private:
 
 private:
     unique_name_id_t select_random_existing_variable_id() const
-    { return std::uniform_int_distribution<unique_name_id_t>{static_cast<unique_name_id_t>(0), get_new_unique_name_id() - 1}(rng_); }
+    {
+        auto&& existing_variables = get_existing_variables();
+        auto&& size = existing_variables.size();
+        auto&& random_index = std::uniform_int_distribution<size_t>{0, size - 1}(rng_);
+        return existing_variables[random_index];
+    }
 
     last::node::BasicNode generate_variable(unique_name_id_t id)
     {
@@ -71,7 +78,7 @@ private:
 
 public:
     NameGenerator(std::mt19937& randomizer) : rng_(randomizer)
-    { new_scope(); /* global scope */ }
+    {}
 
 public:
     last::node::BasicNode generate_new_variable()
@@ -84,10 +91,9 @@ public:
         return generate_variable(get_absolute_new_unique_name_id());
     }
 
-
     last::node::BasicNode generate_existing_variable(unique_name_id_t id = RandomExistingName)
     {
-        if (empty()) throw std::runtime_error("Requests generataion of existing varible with id( = "+std::to_string(get_new_unique_name_id())+" in empty nametable");
+        if (empty()) throw std::runtime_error("Requests generataion of existing varible with id = "+std::to_string(get_new_unique_name_id())+" in empty nametable");
         if (id == RandomExistingName)
         {
             id = select_random_existing_variable_id();
@@ -98,11 +104,6 @@ public:
                                      "which is not respond to some existing variable.\n"
                                      "Now exists only "+std::to_string(get_new_unique_name_id())+" different variables");
         }
-
-        dump(*this);
-        std::cout << "Select existings variable: var_" << id << " =============" << std::endl;
-        if (not exists(id))
-            throw std::runtime_error("select undeclarated variable");
 
         return generate_variable(id);
     }
