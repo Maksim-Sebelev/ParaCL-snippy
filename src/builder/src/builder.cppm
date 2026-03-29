@@ -237,7 +237,7 @@ private:
     BasicNode generate_scope()
     {
         if (statement_depth_ > settings_.max_statement_depth)
-            return generate_print();
+            return generate_not_scoped_statement();
 
         name_generator_.new_scope();
         ++statement_depth_;
@@ -254,7 +254,6 @@ private:
 
         return last::node::create(last::node::Scope{std::move(statements)});
     }
-
 
     BasicNode generate_not_scoped_statement()
     {
@@ -273,7 +272,7 @@ private:
         add_expression_if_its_possible(Statement::VariableDeclarationStmt);
         add_expression_if_its_possible(Statement::ExpressionStmt);
 
-        if (not statements.empty())
+        if (statements.empty())
             throw std::runtime_error("Requests not scoped statement, but no one is enabled");
 
         std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
