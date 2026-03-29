@@ -365,7 +365,7 @@ void serialize(last::AST const & ast, test_generator::SnippySettings const & set
     std::time_t t_c      = std::chrono::system_clock::to_time_t(now);
     std::tm     tm_local = *std::localtime(&t_c);
 
-    ofs << "// Automatic generated with '" << "ParaCl-snippy" << "'\n"
+    ofs << "// Automatic generated with '" << "ParaCL-snippy" << "'\n"
         << "// " << std::put_time(&tm_local, "%Y-%m-%d %H:%M:%S") << "\n\n";
 
     last::node::serialize(ast.root(), ofs, 0, test_generator::BuildProgramSetting::GlobalScope);

@@ -1,0 +1,18 @@
+{
+    "statements-weights": {
+        "assign": 0,
+        "while": 2,
+        "expression": 10,
+        "if": 3,
+        "print": 5,
+        "scope": 0
+    },
+    "expressions-weights": {
+        "binop": 15,
+        "unop": 3,
+        "print": 0,
+        "in": 0
+    },
+    "next-stmt-p": 0.9,
+    "continue-expr-max-p": 0.8
+}

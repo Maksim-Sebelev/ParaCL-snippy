@@ -67,6 +67,7 @@ print
         "expression": 1,
         "if": 3,
         "print": 2,
+        "scope": 1
     },
     "expressions-weights": {
         "binop": 2,

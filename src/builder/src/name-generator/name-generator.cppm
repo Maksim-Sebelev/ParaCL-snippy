@@ -7,6 +7,7 @@ module;
 #include <random>
 #include <limits>
 #include <stdexcept>
+#include <iostream>
 
 #include "create-basic-node.hpp"
 
@@ -41,6 +42,7 @@ private:
 private:
 public:
     using Nametable::get_new_unique_name_id;
+    using Nametable::get_absolute_new_unique_name_id;
     using Nametable::declare;
     using Nametable::new_scope;
     using Nametable::leave_scope;
@@ -53,15 +55,14 @@ private:
 
 private:
     unique_name_id_t select_random_existing_variable_id() const
-    { return std::uniform_int_distribution<unique_name_id_t>{static_cast<unique_name_id_t>(0), get_new_unique_name_id()}(rng_); }
+    { return std::uniform_int_distribution<unique_name_id_t>{static_cast<unique_name_id_t>(0), get_new_unique_name_id() - 1}(rng_); }
 
     last::node::BasicNode generate_variable(unique_name_id_t id)
     {
         assert(id != RandomExistingName);
-        assert(id <= get_new_unique_name_id());
+        assert(id <= get_absolute_new_unique_name_id());
 
-        if (id == get_new_unique_name_id())
-            declare(id);
+        /* declaration must be done outside */
 
         auto&& name = generate_name_by_id(id);
 
@@ -78,8 +79,15 @@ public:
         return generate_variable(get_new_unique_name_id());
     }
 
+    last::node::BasicNode generate_absolute_new_variable()
+    {
+        return generate_variable(get_absolute_new_unique_name_id());
+    }
+
+
     last::node::BasicNode generate_existing_variable(unique_name_id_t id = RandomExistingName)
     {
+        if (empty()) throw std::runtime_error("Requests generataion of existing varible with id( = "+std::to_string(get_new_unique_name_id())+" in empty nametable");
         if (id == RandomExistingName)
         {
             id = select_random_existing_variable_id();
@@ -91,7 +99,20 @@ public:
                                      "Now exists only "+std::to_string(get_new_unique_name_id())+" different variables");
         }
 
+        dump(*this);
+        std::cout << "Select existings variable: var_" << id << " =============" << std::endl;
+        if (not exists(id))
+            throw std::runtime_error("select undeclarated variable");
+
         return generate_variable(id);
+    }
+
+public:
+    friend void dump(NameGenerator const & ng)
+    {
+        std::cout << "NameGenerator dump\n{\n";
+        dump(static_cast<Nametable>(ng));
+        std::cout << "}\n";
     }
 };
 

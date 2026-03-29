@@ -7,6 +7,7 @@ module;
 #include <stdexcept>
 #include <vector>
 #include <array>
+#include <iostream>
 
 #include "create-basic-node.hpp"
 
@@ -60,35 +61,27 @@ private:
 
     using generate_stmt_t = BasicNode (AstGenerator::*)();
 
-    BasicNode generate_new_placeholder_name()
-    {
-        return name_generator_.generate_new_variable();
-    }
-
-    BasicNode generate_existing_placeholder_name()
-    {
-        return name_generator_ .generate_existing_variable();
-    }
-
     BasicNode generate_terminal_expression()
     {
-        std::uniform_int_distribution<int> kind_dist(0, 2);
-        auto kind = kind_dist(random_);
+        auto&& max_kind = 1;
+        std::uniform_int_distribution<int> kind_dist(0, max_kind);
+        auto&& kind = kind_dist(random_);
 
         switch(kind)
         {
             case 0:
-                return last::node::create(last::node::NumberLiteral{
-                    std::uniform_int_distribution<int>(-10, 10)(random_)
-                });
+                return generate_number();
 
             case 1:
-                return generate_new_placeholder_name();
+            {
+                if (not name_generator_.empty())
+                    return name_generator_.generate_existing_variable();
 
-            case 2:
-                return generate_existing_placeholder_name();
+                return generate_number();
+            }
+            
+            // case 2: return generate_in();
         }
-
         throw std::runtime_error("Invalid terminal expression kind");
     }
 
@@ -144,17 +137,29 @@ public:
           random_(std::random_device{}()),
           name_generator_(random_),
           generate_next_statement_probability_(settings_.generate_next_statement_probability),
-          continue_expression_probability_    (settings_.continue_expression_max_probability) {}
+          continue_expression_probability_    (settings_.continue_expression_max_probability)
+        {
+            auto&& weights = settings.statements_weights;
+            for (auto&& w : weights)
+                if (w != 0) return;
+
+            throw std::runtime_error("All statement weights are zero. What do you want from us?");
+        }
 
 private:
     BasicNode generate_scope()
     {
-        std::vector<BasicNode> statements;
+        name_generator_.new_scope();
+    
+        auto&& statements = std::vector<BasicNode>{};
+    
         do
         {
             statements.push_back(generate_statement());
         }
         while (will_generate_new_statement());
+    
+        name_generator_.leave_scope();
 
         return last::node::create(last::node::Scope{std::move(statements)});
     }
@@ -167,21 +172,14 @@ private:
 
     generate_stmt_t select_random_stmt()
     {
-        auto weights = settings_.statements_weights;
-
-        weight_t total_weight = 0;
-        for (auto w : weights)
-            total_weight += w;
-
-        if (total_weight == 0)
-            throw std::runtime_error("All statement weights are zero");
+        auto&& weights = settings_.statements_weights;
 
         std::discrete_distribution<std::size_t> dist(
             weights.begin(),
             weights.end()
         );
 
-        auto index = dist(random_);
+        auto&& index = dist(random_);
 
         switch (static_cast<Statement>(index))
         {
@@ -194,28 +192,43 @@ private:
             case Statement::IfStmt:
                 return &AstGenerator::generate_if;
 
-            case Statement::AssignmentStmt:
-                return &AstGenerator::generate_assigment;
+            case Statement::VariableDeclarationStmt:
+                return &AstGenerator::generate_variable_declaration;
 
             case Statement::PrintStmt:
                 return &AstGenerator::generate_print;
 
+            case Statement::ScopeStmt:
+                return &AstGenerator::generate_scope;
+
+#if not defined(NDEBUG)
             case Statement::STATEMENTS_SIZE:
-                break;
+                throw std::runtime_error("Statement::STATEMENTS_SIZE is unexpected here.");
+            default:
+                throw std::runtime_error("Undefined statement id: " + std::to_string(index));
+#else /* not defined(NDEBUG) */
+            default:
+                __builtin_unreachable();
+#endif /* not defined(NDEBUG) */
         }
 
+#if not defined(NDEBUG)
         throw std::runtime_error("Invalid statement kind");
+#else /* not defined(NDEBUG) */
+        __builtin_unreachable();
+#endif /* not defined(NDEBUG) */
+
     }
 
 private:
     BasicNode generate_while()
     {
         if (statement_depth_ >= max_statement_depth_)
-            return generate_assigment();
+            return generate_expression();
 
         ++statement_depth_;
 
-        auto condition = generate_binary_operator();
+        auto condition = generate_expression();
         auto body      = generate_scope();
 
         --statement_depth_;
@@ -229,30 +242,44 @@ private:
     BasicNode generate_if()
     {
         if (statement_depth_ >= max_statement_depth_)
-            return generate_assigment();
+            return generate_expression();
 
         ++statement_depth_;
 
-        auto condition = generate_binary_operator();
+        auto condition = generate_expression();
         auto body      = generate_scope();
 
         --statement_depth_;
 
-        return last::node::create(last::node::If{
+        auto if_node = last::node::create(last::node::If{
             std::move(condition),
             std::move(body)
         });
+
+        return last::node::create(last::node::Condition({std::move(if_node)}, {}));
     }
 
-    BasicNode generate_assigment()
+    BasicNode generate_variable_declaration()
     {
-        auto lhs = generate_new_placeholder_name();
-        auto rhs = generate_expression();
+        std::uniform_int_distribution<int> kind_dist(0, 1);
+        auto&& kind = kind_dist(random_);
+        auto&& variable = (kind == 0) ? (name_generator_.generate_new_variable()) : (name_generator_.generate_absolute_new_variable());
+        auto&& variable_id = name_generator_.get_new_unique_name_id();
+        auto&& value = generate_expression();
+
+        /* we must check exists variable or not, cause situations like:
+            var_0 = (var_0 = 1);
+                  ^ generate this assignment, (var_0 = 1) is value
+            are possible
+        */
+
+        if (not name_generator_.exists(variable_id))
+            name_generator_.declare(variable_id);
 
         return last::node::create(last::node::BinaryOperator{
             last::node::BinaryOperator::ASGN,
-            std::move(lhs),
-            std::move(rhs)
+            std::move(variable),
+            std::move(value)
         });
     }
 
@@ -261,25 +288,19 @@ private:
         std::uniform_int_distribution<std::size_t> argc_dist(1, 3);
         auto argc = argc_dist(random_);
 
-        std::vector<BasicNode> args;
-        args.reserve(argc);
-
-        for (std::size_t i = 0; i < argc; ++i)
-            args.push_back(generate_expression());
+        std::vector<BasicNode> args = {generate_expression()};
 
         return last::node::create(last::node::Print{std::move(args)});
     }
 
     BasicNode generate_in()
     {
-        auto lhs = generate_new_placeholder_name();
-        auto rhs = last::node::create(last::node::Scan{});
+        return last::node::create(last::node::Scan{});
+    }
 
-        return last::node::create(last::node::BinaryOperator{
-            last::node::BinaryOperator::ASGN,
-            std::move(lhs),
-            std::move(rhs)
-        });
+    BasicNode generate_number()
+    {
+        return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
     }
 
     BasicNode generate_expression()
@@ -314,7 +335,7 @@ private:
         switch (static_cast<Expression>(index))
         {
             case Expression::AssignmentExpr:
-                return generate_assigment();
+                return generate_variable_declaration();
 
             case Expression::BinaryOperatorExpr:
                 return generate_binary_operator();

@@ -66,15 +66,15 @@ void read_statements_weights(boost::json::value const & jv, SnippySettings& sett
 
     auto&& assign_name = "assign";
     if (auto val = weights.if_contains(assign_name))
-        settings.statements_weights[Statement::AssignmentStmt] = extract_weight(*val, assign_name);
-
-    // auto&& in_name = "in";
-    // if (auto val = weights.if_contains(in_name))
-    //     settings.statements_weights[Statement::InStmt] = extract_weight(*val, in_name);
+        settings.statements_weights[Statement::VariableDeclarationStmt] = extract_weight(*val, assign_name);
 
     auto&& print_name = "print";
     if (auto val = weights.if_contains(print_name))
         settings.statements_weights[Statement::PrintStmt] = extract_weight(*val, print_name);
+
+    auto&& scope_name = "scope";
+    if (auto val = weights.if_contains(scope_name))
+        settings.statements_weights[Statement::ScopeStmt] = extract_weight(*val, scope_name);
 }
 
 void read_expressions_weights(boost::json::value const & jv, SnippySettings& settings)

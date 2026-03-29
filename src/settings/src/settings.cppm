@@ -22,7 +22,8 @@ enum /* NOT class */ Statement : size_t
     WhileStmt,
     IfStmt,
     PrintStmt,
-    AssignmentStmt,
+    VariableDeclarationStmt,
+    ScopeStmt,
     STATEMENTS_SIZE
 };
 
@@ -38,7 +39,6 @@ enum /* NOT class */ Expression : size_t
 };
 
 export
-
 struct SnippySettings
 {
     probability_t generate_next_statement_probability = 0.9;
@@ -52,18 +52,18 @@ struct SnippySettings
     SnippySettings()
     {
         // statements weights
-        statements_weights[Statement::ExpressionStmt] = 1;
-        statements_weights[Statement::WhileStmt     ] = 1;
-        statements_weights[Statement::IfStmt        ] = 1;
-        statements_weights[Statement::AssignmentStmt] = 1;
-        statements_weights[Statement::PrintStmt     ] = 1;
-
+        statements_weights[Statement::ExpressionStmt         ] = 1;
+        statements_weights[Statement::WhileStmt              ] = 1;
+        statements_weights[Statement::IfStmt                 ] = 1;
+        statements_weights[Statement::VariableDeclarationStmt] = 1;
+        statements_weights[Statement::PrintStmt              ] = 1;
+        statements_weights[Statement::ScopeStmt              ] = 1;
         // expressions weights
-        expressions_weights[Expression::AssignmentExpr    ] = 1;
-        expressions_weights[Expression::BinaryOperatorExpr] = 1;
-        expressions_weights[Expression::UnaryOperatorExpr ] = 1;
-        expressions_weights[Expression::InExpr            ] = 1;
-        expressions_weights[Expression::PrintExpr         ] = 1;
+        expressions_weights[Expression::AssignmentExpr       ] = 1;
+        expressions_weights[Expression::BinaryOperatorExpr   ] = 1;
+        expressions_weights[Expression::UnaryOperatorExpr    ] = 1;
+        expressions_weights[Expression::InExpr               ] = 1;
+        expressions_weights[Expression::PrintExpr            ] = 1;
     }
 };
 
