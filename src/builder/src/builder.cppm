@@ -471,7 +471,7 @@ private:
     BasicNode generate_assign()
     {
         // generating expression before,
-        // cause if variables will be declared before, 
+        // cause if variables will be declared before,
         // generator will use this variable
         // (for exmample can be situation:
         // var = var + 1
@@ -547,37 +547,64 @@ private:
 
         ++expression_depth_;
 
-        BasicNode lhs;
-        BasicNode rhs;
-
-        if (will_continue_expression())
-            lhs = generate_expression_impl();
-        else
-            lhs = generate_terminal_expression();
-
-        if (will_continue_expression())
-            rhs = generate_expression_impl();
-        else
-            rhs = generate_terminal_expression();
-
-        std::array<last::node::BinaryOperator::BinaryOperatorT, 6> ops =
+        std::array<last::node::BinaryOperator::BinaryOperatorT, 10> ops =
         {
             last::node::BinaryOperator::ADD,
             last::node::BinaryOperator::SUB,
             last::node::BinaryOperator::MUL,
             last::node::BinaryOperator::DIV,
             last::node::BinaryOperator::ISEQ,
-            last::node::BinaryOperator::ISNE
+            last::node::BinaryOperator::ISNE,
+            last::node::BinaryOperator::ADDASGN,
+            last::node::BinaryOperator::SUBASGN,
+            last::node::BinaryOperator::MULASGN,
+            last::node::BinaryOperator::DIVASGN
         };
 
         std::uniform_int_distribution<std::size_t> dist(0, ops.size() - 1);
         auto op = ops[dist(random_)];
 
-        if ((op == last::node::BinaryOperator::DIV) and settings_.save_div)
+        BasicNode lhs;
+        BasicNode rhs;
+
+        if (op == last::node::BinaryOperator::ADDASGN ||
+            op == last::node::BinaryOperator::SUBASGN ||
+            op == last::node::BinaryOperator::MULASGN ||
+            op == last::node::BinaryOperator::DIVASGN)
+        {
+            if (name_generator_.empty())
+            {
+                --expression_depth_;
+                return generate_terminal_expression();
+            }
+
+            lhs = generate_variable();
+
+            if (will_continue_expression())
+                rhs = generate_expression_impl();
+            else
+                rhs = generate_terminal_expression();
+        }
+        else
+        {
+            if (will_continue_expression())
+                lhs = generate_expression_impl();
+            else
+                lhs = generate_terminal_expression();
+
+            if (will_continue_expression())
+                rhs = generate_expression_impl();
+            else
+                rhs = generate_terminal_expression();
+        }
+
+        if ((op == last::node::BinaryOperator::DIV ||
+            op == last::node::BinaryOperator::DIVASGN) &&
+            settings_.save_div)
         {
             if (rhs.is_a<last::node::NumberLiteral>())
             {
-                auto&& number = static_cast<last::node::NumberLiteral>(rhs);
+                auto&& number = static_cast<last::node::NumberLiteral const &>(rhs);
                 if (number.value() == 0)
                     rhs = last::node::create(last::node::NumberLiteral{1});
             }
@@ -589,32 +616,30 @@ private:
                         ->
                     something / ((save_div_tmp_var = expr) == 0 + save_div_tmp_var)
                 */
-                auto&& zero     = last::node::create(last::node::NumberLiteral{0});
-                auto&& tmp_var  = last::node::create(last::node::Variable{"save_div_tmp_var_" + std::to_string(save_div_tmp_var_id++)});
+
+                auto&& zero    = last::node::create(last::node::NumberLiteral{0});
+                auto&& tmp_var = last::node::create(last::node::Variable{"save_div_tmp_var_" + std::to_string(save_div_tmp_var_id++)});
 
                 auto&& set_expression_to_variable = last::node::create(last::node::BinaryOperator
-                    {
-                        last::node::BinaryOperator::ASGN,
-                        tmp_var,
-                        std::move(rhs)
-                    }
-                );
+                {
+                    last::node::BinaryOperator::ASGN,
+                    tmp_var,
+                    std::move(rhs)
+                });
 
                 auto&& compare_expression_with_null = last::node::create(last::node::BinaryOperator
-                    {
-                        last::node::BinaryOperator::ISEQ,
-                        std::move(set_expression_to_variable),
-                        std::move(zero)
-                    }
-                );
-                
+                {
+                    last::node::BinaryOperator::ISEQ,
+                    std::move(set_expression_to_variable),
+                    std::move(zero)
+                });
+
                 rhs = last::node::create(last::node::BinaryOperator
-                    {
-                        last::node::BinaryOperator::ADD,
-                        std::move(compare_expression_with_null),
-                        std::move(tmp_var)
-                    }
-                );
+                {
+                    last::node::BinaryOperator::ADD,
+                    std::move(compare_expression_with_null),
+                    std::move(tmp_var)
+                });
             }
         }
 
