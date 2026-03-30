@@ -18,107 +18,6 @@ namespace last::node
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 export
-class CodeLocation final
-{
-private:
-    using code_place_uint_t = unsigned int;
-private:
-    std::string file_;
-
-    code_place_uint_t line_begin_   = 0;
-    code_place_uint_t line_end_     = 0;
-    code_place_uint_t column_begin_ = 0;
-    code_place_uint_t column_end_   = 0;
-
-    std::string       code_excerpt_ = "";
-
-public: /* getters */
-    std::string_view file() const noexcept
-    { return file_; }
-
-    code_place_uint_t column_begin() const noexcept
-    { return column_begin_; }
-    code_place_uint_t column_end() const noexcept
-    { return column_end_; }
-    code_place_uint_t line_begin() const noexcept
-    { return line_begin_; }
-    code_place_uint_t line_end() const noexcept
-    { return line_end_; }
-
-    std::string_view code_excerpt() const & noexcept
-    { return code_excerpt_;  }
-
-    std::string&& code_excerpt() && noexcept
-    { return std::move(code_excerpt_); }
-
-public: /* setters */
-    void set_file(std::string_view file)
-    { file_ = file; }
-
-    void set_line_begin(code_place_uint_t line_begin) noexcept
-    { line_begin_ = line_begin; }
-
-    void set_line_end(code_place_uint_t line_end) noexcept
-    { line_end_ = line_end; }
-
-    void set_column_begin(code_place_uint_t column_begin) noexcept
-    { column_begin_ = column_begin; }
-
-    void set_column_end(code_place_uint_t column_end) noexcept
-    { column_end_ = column_end; }
-
-    void set_code_excerpt(std::string_view code_excerpt) 
-    { code_excerpt_ = code_excerpt; }
-
-    void set_position(code_place_uint_t line_begin, code_place_uint_t line_end,
-                                code_place_uint_t column_begin, code_place_uint_t column_end) noexcept
-    {
-        line_begin_ = line_begin;
-        line_end_ = line_end;
-        column_begin_ = column_begin;
-        column_end_ = column_end;
-    }
-
-    void set_all(std::string_view file, code_place_uint_t line_begin, code_place_uint_t line_end,
-                           code_place_uint_t column_begin, code_place_uint_t column_end,
-                           std::string_view code_excerpt)
-    {
-        file_ = file;
-        line_begin_ = line_begin;
-        line_end_ = line_end;
-        column_begin_ = column_begin;
-        column_end_ = column_end;
-        code_excerpt_ = code_excerpt;
-    }
-
-public:
-    template <typename... Args>
-    CodeLocation(Args...)
-    {
-        static_assert(false, "using unsecialized CodeLocation tmeplate constructor");
-    }
-
-    template <>
-    CodeLocation()
-    {}
-
-    template <>
-    CodeLocation(std::string_view file, code_place_uint_t lb, code_place_uint_t le, code_place_uint_t cb, code_place_uint_t ce) :
-        file_(file),
-        line_begin_(lb), line_end_(le), column_begin_(cb), column_end_(ce),
-        code_excerpt_()
-    {}
-    template <>
-    CodeLocation(std::string_view file, code_place_uint_t lb, code_place_uint_t le, code_place_uint_t cb, code_place_uint_t ce, std::string_view code_excerpt) :
-        file_(file),
-        line_begin_(lb), line_end_(le), column_begin_(cb), column_end_(ce),
-        code_excerpt_(code_excerpt)
-    {}
-};
-
-//--------------------------------------------------------------------------------------------------------------------------------------
-
-export
 class Scope final : private std::vector<BasicNode>
 {
 public:
@@ -144,15 +43,6 @@ public:
 
     Scope(std::initializer_list<BasicNode> il) : std::vector<BasicNode>(std::move(il))
     {}
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -168,15 +58,6 @@ public:
 public:
     std::string_view name() const & noexcept
     { return name_; }
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -200,34 +81,13 @@ public:
     {}
     Print(std::initializer_list<BasicNode> il) : std::vector<BasicNode>(std::move(il))
     {}
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 export
 class Scan final
-{
-public:
-    Scan() = default;
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
-};
+{};
 
 //--------------------------------------------------------------------------------------------------------------------------------------
 
@@ -258,15 +118,6 @@ public:
 
     BasicNode &arg() & noexcept
     { return arg_; }
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -333,15 +184,6 @@ public:
     { return rarg_; }
     BasicNode &rarg() & noexcept
     { return rarg_; }
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -364,15 +206,6 @@ public:
 
     NumberLiteral(NumberLiteral&& other): value_(other.value_)
     {}
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -389,15 +222,6 @@ public:
 public:
     std::string_view value() const & noexcept
     { return value_; }
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -436,9 +260,6 @@ public:
     { return body_; }
     BasicNode &body() & noexcept
     { return body_; }
-
-protected:
-    mutable CodeLocation location_;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -448,14 +269,6 @@ class While final : public ConditionWithBody
 {
 public:
     using ConditionWithBody::ConditionWithBody;
-
-private:
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -465,13 +278,6 @@ class If final : public ConditionWithBody
 {
 public:
     using ConditionWithBody::ConditionWithBody;
-
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -500,15 +306,6 @@ public:
 
 private:
     Else() = default;
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -558,15 +355,6 @@ public:
     { return else_; }
     BasicNode &get_else() & noexcept
     { return else_; }
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -590,15 +378,6 @@ public:
     Return(BasicNode const & expression) :
         expression_(expression)
     {}
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -664,15 +443,6 @@ FunctionDeclaration(std::string&& name, std::vector<std::string>&& args, BasicNo
 
     void set_body(BasicNode const & new_body)
     { body_ = new_body; }
-
-private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
-
-    CodeLocation const & location() const & noexcept
-    { return location_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -711,15 +481,56 @@ public:
 
     void set_name(std::string&& name)
     { name_ = std::move(name); }
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+
+export
+class Comment final
+{
+public:
+    enum CommentT
+    {
+        OneLine,
+        MultiLine
+    };
 
 private:
-    mutable CodeLocation location_;
-public:
-    CodeLocation & location() & noexcept
-    { return location_; }
+    CommentT type_;
+    std::string comment_;
+    bool separated_;
 
-    CodeLocation const & location() const & noexcept
-    { return location_; }
+public:
+
+    Comment(CommentT type, std::string_view comment, bool separated = false) :
+        type_(type), comment_(comment), separated_(separated)
+    {}
+
+public:
+    std::string_view comment() const & noexcept
+    { return comment_; }
+
+    CommentT type() const noexcept
+    { return type_; }
+
+    bool separated() const noexcept
+    { return separated_; }
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+
+export
+class Semicolon final
+{
+private:
+    bool separated_;
+
+public:
+    Semicolon(bool separated = true) : 
+        separated_(separated)
+    {}
+    bool separated() const noexcept
+    { return separated_; }
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------

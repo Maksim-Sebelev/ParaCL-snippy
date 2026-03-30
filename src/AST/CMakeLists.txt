@@ -155,9 +155,7 @@ add_library(${AST_FUNCTIONAL_LIB})
 
 set(AST_FUNCTIONAL_THELAST_SRC_DIR ${THELAST_SRC_DIR}/functional)
 set(AST_FUNCTIONAL_SRC
-    ${AST_FUNCTIONAL_THELAST_SRC_DIR}/write.cppm
     ${AST_FUNCTIONAL_THELAST_SRC_DIR}/graphic-dump.cppm
-
 )
 
 target_sources(${AST_FUNCTIONAL_LIB}
@@ -278,17 +276,4 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/THE-LAST
 )
 
-# ================== ===============================================================================
-# test
-
-add_executable(thelast-test
-${THELAST_SRC_DIR}/../tests/test.cpp
-)
-
-target_link_libraries(thelast-test
-PRIVATE
-    TheLast::TheLast
-)
-
 # =================================================================================================
-

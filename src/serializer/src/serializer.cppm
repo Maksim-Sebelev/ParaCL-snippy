@@ -6,6 +6,7 @@ module;
 #include <fstream>
 #include <chrono>
 #include <string>
+#include <random>
 
 export module ast_serializer;
 
@@ -29,7 +30,7 @@ enum class BuildProgramSetting
 };
 
 void write_n_tab(std::ostream& os, size_t tabs)
-{ os << std::string(tabs, '\t'); }
+{ os << "\n" << std::string(tabs, '\t'); }
 
 void new_line(std::ostream& os)
 { os << "\n"; }
@@ -37,13 +38,13 @@ void new_line(std::ostream& os)
 void begin_scope(std::ostream& os, size_t enclosure)
 {
     write_n_tab(os, enclosure);
-    os << "{\n";
+    os << "{";
 }
 
 void leave_scope(std::ostream& os, size_t enclosure)
 {
     write_n_tab(os, enclosure);
-    os << "}\n";
+    os << "}";
 }
 
 bool is_not_expression(BuildProgramSetting setting)
@@ -74,12 +75,12 @@ void expression_or_statement_end_action(std::ostream& os, BuildProgramSetting se
     if (is_expression)
         os << ")";
     else
-        os << ";\n";
+        os << ";";
 }
 
 
 void statement_end(std::ostream& os)
-{ os << ";\n"; }
+{ os << ";"; }
 
 
 } /* namespace serialize */
@@ -142,7 +143,7 @@ void visit(Scope const & node, std::ostream& os, size_t enclosure, test_generato
     if ((size == 0) and is_scope_after_condition)
     {
         test_generator::write_n_tab(os, enclosure);
-        os << "{}\n";
+        os << "{}";
         return;
     }
 
@@ -165,7 +166,7 @@ void visit(While const & node, std::ostream& os, size_t enclosure, [[maybe_unuse
     test_generator::write_n_tab(os, enclosure);
     os << "while (";
     serialize(node.condition(), os, 0, test_generator::BuildProgramSetting::DontSeparateExpression);
-    os << ")\n";
+    os << ")";
     serialize(node.body(), os, enclosure, test_generator::BuildProgramSetting::ScopeLikeConditionBody);
 }
 
@@ -178,7 +179,7 @@ void visit(If const & node, std::ostream& os, size_t enclosure, test_generator::
 
     os << "if (";
     serialize(node.condition(), os, 0, test_generator::BuildProgramSetting::DontSeparateExpression);
-    os << ")\n";
+    os << ")";
     serialize(node.body(), os, enclosure, test_generator::BuildProgramSetting::ScopeLikeConditionBody);
 }
 
@@ -186,7 +187,7 @@ template <>
 void visit(Else const & node, std::ostream& os, size_t enclosure, [[maybe_unused]] test_generator::BuildProgramSetting)
 {
     test_generator::write_n_tab(os, enclosure);
-    os << "else\n";
+    os << "else";
     serialize(node.body(), os, enclosure, test_generator::BuildProgramSetting::ScopeLikeConditionBody);
 }
 
@@ -321,7 +322,6 @@ void visit(FunctionDeclaration const & node, std::ostream& os, [[maybe_unused]] 
 
     if (not node.name().empty())
         os << " : " << node.name();
-    os << "\n";
 
     serialize(node.body(), os, 0, test_generator::BuildProgramSetting::DummyValue);
 
@@ -350,6 +350,43 @@ void visit(FunctionCall const & node, std::ostream& os, size_t enclosure, test_g
 
     if (is_not_expression)
         test_generator::statement_end(os);
+}
+
+template <>
+void visit(Comment const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting setting)
+{
+    auto&& is_multi_line = (node.type() == Comment::MultiLine);
+    auto&& is_separated = node.separated();
+
+    if (is_separated)
+        test_generator::write_n_tab(os, enclosure);
+    else
+        os << " ";
+
+    if (is_multi_line)
+        os << "/*";
+    else
+        os << "//";
+
+    os << node.comment();
+
+    if (is_multi_line)
+    {
+        if (is_separated)
+            test_generator::write_n_tab(os, enclosure);
+        os << "*/";
+    }
+}
+
+template <>
+void visit(Semicolon const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting)
+{
+    auto&& is_separated = node.separated();
+
+    if (is_separated)
+        test_generator::write_n_tab(os, enclosure);
+
+    os << ";";
 }
 
 } /* namespace visit_specializations */

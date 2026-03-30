@@ -85,8 +85,9 @@ while\
 if\
 print
 expression\
-scope
-
+scope\
+comment\
+semicolon
 
 5) Параметр `expressions-weights` - задается массивом из весов экспрешенов. Полный аналог предыдущего параметра `statements-weights` для экспрешенов.\
 Имена инструкций:\
@@ -104,25 +105,29 @@ number
 ```json
 {
     "statements-weights": {
-        "declaration": 0,
-        "while": 2,
-        "expression": 0,
-        "if": 3,
-        "print": 5,
-        "scope": 0
+        "declaration": 1,
+        "while": 1,
+        "expression": 1,
+        "if": 1,
+        "print": 1,
+        "scope": 1,
+        "comment": 1,
+        "semicolon": 1
     },
     "expressions-weights": {
-        "binop": 15,
-        "unop": 3,
-        "print": 0,
+        "binop": 1,
+        "unop": 1,
+        "print": 1,
         "in": 0,
-        "variable": 0,
+        "variable": 1,
         "number": 1
     },
-    "next-stmt-p": 0.9,
-    "continue-expr-max-p": 0.9,
-    "max-expression-depth": 10,
-    "max-scope-depth": 7
+    "next-stmt-p": 0.8,
+    "continue-expr-max-p": 0.6,
+    "max-expression-depth": 3,
+    "max-scope-depth": 4
+}
+": 7
 }
 ```
 

@@ -53,16 +53,6 @@ void dump_and_link_with_parent(std::ofstream& os, unique_node_id_t parent, Basic
     link_nodes(os, parent, get_node_unique_id(node), label);
 }
 
-std::string dump_code_location(last::node::CodeLocation const & location)
-{
-    auto&& dump = std::ostringstream{};
-    dump << location.file()
-         << ":" << location.line_begin()
-         << ":" << location.column_begin();
-
-    return dump.str();
-}
-
 } /* namespace graphic_dump */
 } /* namespace last::node */
 
@@ -128,7 +118,7 @@ void visit([[maybe_unused]] Scan const& node, unique_node_id_t unique_node_id, s
 template <>
 void visit(Variable const& node, unique_node_id_t unique_node_id, std::ofstream& os)
 {
-    std::string label = "Variable: " + std::string(node.name()) + "\n" + graphic_dump::dump_code_location(node.location());
+    std::string label = "Variable: " + std::string(node.name());
     graphic_dump::create_node(os, unique_node_id,
                               label, "style=filled, fillcolor=\"lightblue\"");
 }
@@ -136,7 +126,7 @@ void visit(Variable const& node, unique_node_id_t unique_node_id, std::ofstream&
 template <>
 void visit(NumberLiteral const& node, unique_node_id_t unique_node_id, std::ofstream& os)
 {
-    std::string label = "Number Literal: " + std::to_string(node.value()) + "\n" + graphic_dump::dump_code_location(node.location());
+    std::string label = "Number Literal: " + std::to_string(node.value());
     graphic_dump::create_node(os, unique_node_id, label);
 }
 
@@ -157,7 +147,7 @@ void visit(UnaryOperator const& node, unique_node_id_t unique_node_id, std::ofst
         case UnaryOperator::PLUS:  op_name = "+"; break;
         case UnaryOperator::NOT:   op_name = "not"; break;
     }
-    std::string label = "Unary Operator" + op_name + "\n" + graphic_dump::dump_code_location(node.location());
+    std::string label = "Unary Operator" + op_name;
     graphic_dump::create_node(os, unique_node_id, label, "style=filled, fillcolor=\"lightyellow\"");
 
     graphic_dump::dump_and_link_with_parent(os, unique_node_id, node.arg(), "arg");
@@ -190,8 +180,6 @@ void visit(BinaryOperator const& node, unique_node_id_t unique_node_id, std::ofs
         case BinaryOperator::REMASGN: label += "%="; break;
         default:                      label += "??"; break;
     }
-
-    label += "\n" + graphic_dump::dump_code_location(node.location());
 
     graphic_dump::create_node(os, unique_node_id, label, "style=filled, fillcolor=\"lightyellow\"");
 
@@ -263,7 +251,7 @@ void visit(FunctionDeclaration const& node, unique_node_id_t unique_node_id, std
             label += (", " + args[it]);
     }
     label += ")'";
-    label += "\n" + graphic_dump::dump_code_location(node.location());
+    
     graphic_dump::create_node(os, unique_node_id, label, "style=filled, fillcolor=\"greenyellow\"");
     graphic_dump::dump_and_link_with_parent(os, unique_node_id, node.body(), "body");
 }
@@ -273,7 +261,7 @@ void visit(FunctionCall const& node, unique_node_id_t unique_node_id, std::ofstr
 {
     auto&& label = "call: '" + std::string(node.name()) + "'";
     graphic_dump::create_node(os, unique_node_id, label, "style=filled, fillcolor=\"indianred2\"");
-    label += "\n" + graphic_dump::dump_code_location(node.location());
+    
     auto&& args = node.args();
     if (args.size() != 0)
     {
@@ -285,6 +273,30 @@ void visit(FunctionCall const& node, unique_node_id_t unique_node_id, std::ofstr
             graphic_dump::dump_and_link_with_parent(os, args_unique_id, arg);
     }
 }
+
+//-----------------------------------------------------------------------------
+
+template <>
+void visit(Comment const & node, unique_node_id_t unique_node_id, std::ofstream& os)
+{
+    auto&& label = "Comment:\n" + std::string(node.comment()) + "\ntype: ";
+    switch (node.type())
+    {
+        case Comment::MultiLine: label += "multi-line"; break;
+        case Comment::OneLine: label += "one-line"; break;
+    }
+    graphic_dump::create_node(os, unique_node_id, label);
+}
+
+//-----------------------------------------------------------------------------
+
+template <>
+void visit(Semicolon const & node, unique_node_id_t unique_node_id, std::ofstream& os)
+{
+    auto&& label = ";";
+    graphic_dump::create_node(os, unique_node_id, label);
+}
+
 //-----------------------------------------------------------------------------
 } /* namespace last::node::visit_specializations */
 //-----------------------------------------------------------------------------

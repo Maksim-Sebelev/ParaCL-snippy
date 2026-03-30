@@ -24,6 +24,8 @@ enum /* NOT class */ Statement : size_t
     PrintStmt,
     VariableDeclarationStmt,
     ScopeStmt,
+    SemicolonStmt,
+    CommentStmt,
     STATEMENTS_SIZE
 };
 
@@ -49,12 +51,10 @@ struct SnippySettings
     std::array<weight_t, Statement ::STATEMENTS_SIZE>  statements_weights;
     std::array<weight_t, Expression::EXPRESSIONS_SIZE> expressions_weights;
 
-    std::filesystem::path output_file = "a.cl";
-
     size_t max_scope_depth = 7;
     size_t max_expression_depth = 100;
 
-    SnippySettings()
+    constexpr SnippySettings()
     {
         // statements weights
         statements_weights[Statement::ExpressionStmt         ] = 1;
@@ -63,6 +63,9 @@ struct SnippySettings
         statements_weights[Statement::VariableDeclarationStmt] = 1;
         statements_weights[Statement::PrintStmt              ] = 1;
         statements_weights[Statement::ScopeStmt              ] = 1;
+        statements_weights[Statement::SemicolonStmt          ] = 1;
+        statements_weights[Statement::CommentStmt            ] = 1;
+
         // expressions weights
         expressions_weights[Expression::AssignmentExpr       ] = 1;
         expressions_weights[Expression::BinaryOperatorExpr   ] = 1;

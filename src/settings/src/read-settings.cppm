@@ -76,6 +76,15 @@ void read_statements_weights(boost::json::value const & jv, SnippySettings& sett
     auto&& scope_name = "scope";
     if (auto val = weights.if_contains(scope_name))
         settings.statements_weights[Statement::ScopeStmt] = extract_weight(*val, scope_name);
+
+    auto&& comment_name = "comment";
+    if (auto val = weights.if_contains(comment_name))
+        settings.statements_weights[Statement::CommentStmt] = extract_weight(*val, comment_name);
+
+    auto&& semicolon_name = "semicolon";
+    if (auto val = weights.if_contains(semicolon_name))
+        settings.statements_weights[Statement::SemicolonStmt] = extract_weight(*val, semicolon_name);
+
 }
 
 void read_expressions_weights(boost::json::value const & jv, SnippySettings& settings)

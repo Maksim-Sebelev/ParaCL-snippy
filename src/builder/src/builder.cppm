@@ -34,6 +34,8 @@ SPECIALIZE_CREATE(last::node::StringLiteral      , last::node::serializable, las
 SPECIALIZE_CREATE(last::node::Return             , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::FunctionCall       , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::FunctionDeclaration, last::node::serializable, last::node::dumpable)
+SPECIALIZE_CREATE(last::node::Comment            , last::node::serializable, last::node::dumpable)
+SPECIALIZE_CREATE(last::node::Semicolon          , last::node::serializable, last::node::dumpable)
 
 namespace test_generator
 {
@@ -93,6 +95,25 @@ private:
                 "Terminal expressions are disabled, so the generator is incorrectly configured.\n"
                 "Also, only enabled Variables are useless, cause it`s impossible to use only variables, without other terminal expressions."
             );
+    }
+
+    BasicNode generate_semicolon()
+    {
+        auto&& kind_dist = std::uniform_int_distribution<int> (0, 1);
+        auto&& kind      = static_cast<bool>(kind_dist(random_));
+        return last::node::create(last::node::Semicolon{kind});
+    }
+
+    BasicNode generate_comment()
+    {
+        auto&& kind_dist = std::uniform_int_distribution<int> (0, 1);
+        auto&& kind_type = kind_dist(random_);
+        auto&& separated = static_cast<bool>(kind_dist(random_));
+
+        auto&& type = (kind_type == 0) ? last::node::Comment::MultiLine : last::node::Comment::OneLine;
+        auto&& comment = (kind_type == 0) ? (separated ? "\njust\nmulti-line\ncomment" : "just multi-line comment") : " just one line comment";
+
+        return last::node::create(last::node::Comment(type, std::move(comment), separated));
     }
 
     BasicNode generate_terminal_expression()
@@ -271,6 +292,8 @@ private:
         add_expression_if_its_possible(Statement::PrintStmt);
         add_expression_if_its_possible(Statement::VariableDeclarationStmt);
         add_expression_if_its_possible(Statement::ExpressionStmt);
+        add_expression_if_its_possible(Statement::SemicolonStmt);
+        add_expression_if_its_possible(Statement::CommentStmt);
 
         if (statements.empty())
             throw std::runtime_error("Requests not scoped statement, but no one is enabled");
@@ -288,6 +311,12 @@ private:
 
             case Statement::ExpressionStmt:
                 return generate_expression();
+
+            case Statement::SemicolonStmt:
+                return generate_semicolon();
+
+            case Statement::CommentStmt:
+                return generate_comment();
 
             default:
                 throw std::runtime_error("Invalid terminal expression selected");
@@ -325,6 +354,12 @@ private:
 
             case Statement::ScopeStmt:
                 return generate_scope();
+
+            case Statement::SemicolonStmt:
+                return generate_semicolon();
+
+            case Statement::CommentStmt:
+                return generate_comment();
 
 #if not defined(NDEBUG)
             case Statement::STATEMENTS_SIZE:
