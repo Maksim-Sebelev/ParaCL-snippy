@@ -57,6 +57,102 @@ private:
     std::size_t statement_depth_  = 0LU;
     std::size_t expression_depth_ = 0LU;
 
+    bool делаем_пасхалку_;
+    std::vector<std::string_view> пасхалка_
+    {
+        "Ослепший старый маг",
+        "Ночью по лесу бродил",
+        "На кладбище разлил",
+        "Он волшебный эликсир",
+        "И лишь проговорил",
+        "\"Что ж я, старый, натворил!\"",
+        "Хой!",
+        "Хой, хой!",
+        "Пого-пого!",
+        "Трупы оживали, землю разрывали",
+        "Всюду выползали, дико бушевали",
+        "Глотки драли, всё вокруг ломали",
+        "Рвали свою плоть",
+        "Это место, люди не любили",
+        "Потому что здесь гадов хоронили",
+        "Все они водку пили",
+        "Проклятыми были",
+        "Среди ублюдков шёл артист",
+        "В кожаном плаще, мёртвый анархист",
+        "Крикнул он: \"Хой! Челюсть долой!\"",
+        "Трупов вёл он за собой",
+        "Хой, хой!",
+        "Пого-пого!",
+        "Бешено в деревню мёртвые ворвались!",
+        "В свете фонарей рожи показались",
+        "Дрались и по полной отрывались",
+        "Шли дома громить",
+        "Взяли люди топоры и вилы",
+        "Мертвецов загнать в свои могилы",
+        "Но на это не хватило силы",
+        "Трупов не убить!",
+        "Среди ублюдков шёл артист",
+        "В кожаном плаще, мёртвый анархист",
+        "Крикнул он: \"Хой! Челюсть долой!\"",
+        "Трупов вёл он за собой",
+        "Был на руке застывший фак",
+        "Из кармана торчал пиратский флаг",
+        "Зомби всю ночь кричали: \"Хой!",
+        "Мы, анархисты, народ не злой!\"",
+        "Что за наваждение! Без предупреждения",
+        "На отрока напали, сильно напугали",
+        "Смеялись и толкались, парнишку заставляли",
+        "Пого танцевать!",
+        "Что есть мочи женщины визжали",
+        "И крестьяне в панике бежали",
+        "Трупы дохли и снова оживали",
+        "Ржали людям вслед",
+        "Среди ублюдков шёл артист",
+        "В кожаном плаще, мёртвый анархист",
+        "Крикнул он: \"Хой! Челюсть долой!\"",
+        "Трупов вёл он за собой",
+        "Был на руке застывший фак",
+        "Из кармана торчал пиратский флаг",
+        "Зомби всю ночь кричали: \"Хой!",
+        "Мы, анархисты, народ не злой!\"",
+        "В жизни артист весёлым был",
+        "И нажраться он всегда любил",
+        "Утро крестьянам помогло",
+        "Солнце трупы за полчаса сожгло",
+        "Но в тишине ночной",
+        "В подвале кто-то рявкнул",
+        "\"Хой!\"",
+        "__перерыв__",
+        "За столом сидели мужики и ели",
+        "Мясом конюх угощал своих гостей",
+        "Все расхваливали ужин, и хозяин весел был",
+        "О жене своей всё время говорил",
+        "Ели мясо мужики",
+        "Пивом запивали",
+        "О чём конюх говорил",
+        "Они не понимали",
+        "\"Я узнал недавно, все вы, как ни странно",
+        "Конюх хриплым голосом проговорил",
+        "С моей бабою встречались в тайне от меня",
+        "И поэтому всех вас собрал сегодня я\"",
+        "Ели мясо мужики",
+        "Пивом запивали",
+        "О чём конюх говорил",
+        "Они не понимали",
+        "\"Я за ней не уследил",
+        "В том моя вина",
+        "Но скажите",
+        "Правда, вкусная она?\"",
+        "Ели мясо мужики",
+        "Пивом запивали",
+        "О чём конюх говорил",
+        "Они не понимали",
+        "Ели мясо мужики",
+        "Пивом запивали",
+        "О чём конюх говорил",
+        "Они не понимали"
+    };
+
 private:
     void check_configuration()
     {
@@ -108,13 +204,22 @@ private:
     BasicNode generate_comment()
     {
         auto&& kind_dist = std::uniform_int_distribution<int> (0, 1);
-        auto&& kind_type = kind_dist(random_);
         auto&& separated = static_cast<bool>(kind_dist(random_));
 
-        auto&& type = (kind_type == 0) ? last::node::Comment::MultiLine : last::node::Comment::OneLine;
-        auto&& comment = (kind_type == 0) ? (separated ? "\njust\nmulti-line\ncomment" : "just multi-line comment") : " just one line comment";
+        if (not делаем_пасхалку_)
+        {
+            auto&& kind_type = kind_dist(random_);
 
-        return last::node::create(last::node::Comment(type, std::move(comment), separated));
+            auto&& type = (kind_type == 0) ? last::node::Comment::MultiLine : last::node::Comment::OneLine;
+            auto&& comment = (kind_type == 0) ? (separated ? "\njust\nmulti-line\ncomment" : "just multi-line comment") : " just one line comment";
+            return last::node::create(last::node::Comment(type, std::move(comment), separated));
+        }
+
+        static size_t counter = 0LU;
+        auto&& comment = " " + std::string(пасхалка_[counter++]);
+        if (counter >= пасхалка_.size()) делаем_пасхалку_ = false;
+
+        return last::node::create(last::node::Comment{last::node::Comment::OneLine, std::move(comment), separated});
     }
 
     BasicNode generate_terminal_expression()
@@ -242,17 +347,6 @@ private:
     {
         auto&& dist = std::bernoulli_distribution{continue_expression_probability_};
         return dist(random_);
-    }
-
-public:
-    AstGenerator(SnippySettings const& settings)
-        : settings_(settings),
-        random_(std::random_device{}()),
-        name_generator_(random_),
-        generate_next_statement_probability_(settings_.generate_next_statement_probability),
-        continue_expression_probability_    (settings_.continue_expression_max_probability)
-    {
-        check_configuration();
     }
 
 private:
@@ -547,7 +641,7 @@ private:
 
         ++expression_depth_;
 
-        std::array<last::node::BinaryOperator::BinaryOperatorT, 10> ops =
+        static constexpr std::array<last::node::BinaryOperator::BinaryOperatorT, 10> ops =
         {
             last::node::BinaryOperator::ADD,
             last::node::BinaryOperator::SUB,
@@ -683,6 +777,18 @@ private:
             op,
             std::move(arg)
         });
+    }
+
+public:
+    AstGenerator(SnippySettings const& settings)
+        : settings_(settings),
+        random_(std::random_device{}()),
+        name_generator_(random_),
+        generate_next_statement_probability_(settings_.generate_next_statement_probability),
+        continue_expression_probability_    (settings_.continue_expression_max_probability),
+        делаем_пасхалку_(std::uniform_int_distribution<int>{0, 10}(random_) == 0)
+    {
+        check_configuration();
     }
 
 public:
