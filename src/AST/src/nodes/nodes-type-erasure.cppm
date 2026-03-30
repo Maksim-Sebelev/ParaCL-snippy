@@ -5,6 +5,7 @@ module;
 #include <any>
 #include <type_traits>
 #include <utility>
+#include <concepts>
 #include <typeinfo>
 
 export module node_type_erasure;
@@ -262,7 +263,7 @@ public:
     /* check is the real node type T */
     template <typename T>
     bool is_a() const
-    { return (self_ and (typeid(T) == self_->type_())); }
+    { return (self_ and (typeid(std::remove_cvref_t<T>) == self_->type_())); }
 
     /* check that self is not nullptr */
     /* implicit */ operator bool() const noexcept
@@ -274,22 +275,12 @@ public:
     /* convert to a real data */
     template <typename T>
     requires (not std::is_same_v<std::remove_cvref_t<T>, bool>)
-    operator const T &() const
+    operator T () const
     {
         if (not is_a<T>())
             throw std::runtime_error("Bad last::node::BasicNode cast: real type: '" + std::string(self_->type_().name()) + "', casted type: '" + typeid(T).name() + std::string("'"));
 
-        return (static_cast<NodeImpl<T> const *>(self_.get()))->data_;
-    }
-
-    template <typename T>
-    requires (not std::is_same_v<std::remove_cvref_t<T>, bool>)
-    operator T& ()
-    {
-        if (not is_a<T>())
-            throw std::runtime_error("Bad last::node::BasicNode cast: real type: '" + std::string(self_->type_().name()) + "', casted type: '" + typeid(T).name() + std::string("'"));
-
-        return (static_cast<NodeImpl<T>*>(self_.get()))->data_;
+        return (reinterpret_cast<NodeImpl<std::remove_cvref_t<T>> const *>(self_.get()))->data_;
     }
 };
 

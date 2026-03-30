@@ -100,6 +100,15 @@ void visit(Scope const& node, unique_node_id_t unique_node_id, std::ofstream& os
 }
 
 template <>
+void visit(LinearSequence const& node, unique_node_id_t unique_node_id, std::ofstream& os)
+{
+    graphic_dump::create_node(os, unique_node_id, "LinearSequence", "style=filled, fillcolor=\"lightgray\"");
+
+    for (auto&& arg: node)
+        graphic_dump::dump_and_link_with_parent(os, unique_node_id, arg);
+}
+
+template <>
 void visit(Print const& node, unique_node_id_t unique_node_id, std::ofstream& os)
 {
     graphic_dump::create_node(os, unique_node_id, "Print", "style=filled, fillcolor=\"lightyellow\"");

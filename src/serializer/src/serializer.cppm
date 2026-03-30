@@ -161,6 +161,13 @@ void visit(Scope const & node, std::ostream& os, size_t enclosure, test_generato
 }
 
 template <>
+void visit(LinearSequence const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting setting)
+{
+    for (auto&& arg: node)
+        serialize(arg, os, enclosure, test_generator::BuildProgramSetting::UseEnclosure);
+}
+
+template <>
 void visit(While const & node, std::ostream& os, size_t enclosure, [[maybe_unused]] test_generator::BuildProgramSetting)
 {
     test_generator::write_n_tab(os, enclosure);
@@ -425,6 +432,7 @@ void serialize(last::AST const & ast, test_generator::Options const & options)
     }
 
     last::node::serialize(ast.root(), ofs, 0, test_generator::BuildProgramSetting::GlobalScope);
+    ofs << "\n";
 }
 
 } /* namespace test_generator */

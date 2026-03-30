@@ -215,22 +215,69 @@ void read_save_div(boost::json::value const & jv, SnippySettings& settings)
     if (json_value.is_bool())
     {
         auto&& value = json_value.as_bool();
-        settings.save_div = static_cast<size_t>(value);
+        settings.save_div = static_cast<bool>(value);
         return;
     }
     throw std::runtime_error("Field '" + std::string(key) + "' must be bool.");
 }
+
+void read_save_while(boost::json::value const & jv, SnippySettings& settings)
+{
+    auto&& root_obj = jv.as_object();
+
+    auto&& key = "save-while";
+    if (not root_obj.contains(key)) return;
+
+    auto&& json_value = root_obj.at(key);
+
+    if (json_value.is_bool())
+    {
+        auto&& value = json_value.as_bool();
+        settings.guaranteed_to_end_while = static_cast<bool>(value);
+        return;
+    }
+    throw std::runtime_error("Field '" + std::string(key) + "' must non negative integer.");
+}
+
+void read_while_iterations_limit(boost::json::value const & jv, SnippySettings& settings)
+{
+    auto&& root_obj = jv.as_object();
+
+    auto&& key = "while-iterations-limit";
+    if (not root_obj.contains(key)) return;
+
+    auto&& json_value = root_obj.at(key);
+
+    if (json_value.is_int64())
+    {
+        auto&& value = json_value.as_int64();
+        if (value >= 0)
+        {
+            settings.while_iterations_limit = static_cast<size_t>(value);
+            return;
+        }
+        return;
+    }
+    throw std::runtime_error("Field '" + std::string(key) + "' must be bool.");
+}
+
 
 SnippySettings read_settings_(std::string_view json_data)
 {
     auto&& jv = boost::json::parse(json_data);
 
     auto&& settings = SnippySettings{};
+
     read_statements_weights(jv, settings);
     read_expressions_weights(jv, settings);
+    read_max_statement_depth(jv, settings);
+    read_max_expression_depth(jv, settings);
     read_generate_next_statement_probability(jv, settings);
     read_continue_expression_max_probability(jv, settings);
     read_save_div(jv, settings);
+    read_save_while(jv, settings);
+    read_while_iterations_limit(jv, settings);
+
     return settings;
 }
 

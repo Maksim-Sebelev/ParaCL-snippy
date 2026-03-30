@@ -48,6 +48,36 @@ public:
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 export
+class LinearSequence : private std::vector<BasicNode>
+{
+public:
+    using std::vector<BasicNode>::emplace_back;
+    using std::vector<BasicNode>::push_back;
+    using std::vector<BasicNode>::begin;
+    using std::vector<BasicNode>::end;
+    using std::vector<BasicNode>::size;
+    using std::vector<BasicNode>::operator[];
+    using std::vector<BasicNode>::back;
+
+public:
+    LinearSequence() = default;
+
+    LinearSequence(size_t size) : std::vector<BasicNode>(size)
+    {}
+
+    LinearSequence(std::vector<BasicNode>&& nodes) : std::vector<BasicNode>(std::move(nodes))
+    {}
+
+    LinearSequence(std::vector<BasicNode> const & nodes) : std::vector<BasicNode>(nodes)
+    {}
+
+    LinearSequence(std::initializer_list<BasicNode> il) : std::vector<BasicNode>(std::move(il))
+    {}
+};
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+
+export
 class Variable final
 {
 private:

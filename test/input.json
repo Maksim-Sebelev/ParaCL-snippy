@@ -21,5 +21,6 @@
     "continue-expr-max-p": 0.6,
     "max-expression-depth": 3,
     "max-scope-depth": 4,
-    "save-div": true
+    "save-div": true,
+    "save-while": true
 }

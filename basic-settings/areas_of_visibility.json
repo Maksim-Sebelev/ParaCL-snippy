@@ -1,11 +1,11 @@
 {
     "statements-weights": {
-        "declaration": 20,
+        "declaration": 2,
         "while": 0,
         "expression": 0,
         "if": 0,
         "print": 0,
-        "scope": 30,
+        "scope": 3,
         "comment": 0,
         "semicolon": 0
     },
@@ -20,5 +20,7 @@
     "next-stmt-p": 0.8,
     "continue-expr-max-p": 0,
     "max-expression-depth": 10,
-    "max-scope-depth": 7
+    "max-scope-depth": 7,
+    "save-div": true,
+    "save-while": true
 }

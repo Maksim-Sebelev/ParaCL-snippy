@@ -21,6 +21,7 @@ import ast_serializer;
 
 
 SPECIALIZE_CREATE(last::node::Scope              , last::node::serializable, last::node::dumpable)
+SPECIALIZE_CREATE(last::node::LinearSequence     , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::Print              , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::Scan               , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::UnaryOperator      , last::node::serializable, last::node::dumpable)
@@ -257,7 +258,7 @@ public:
 private:
     BasicNode generate_scope()
     {
-        if (statement_depth_ > settings_.max_scope_depth)
+        if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
         name_generator_.new_scope();
@@ -386,8 +387,64 @@ private:
         if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
-        auto condition = generate_expression();
-        auto body      = generate_scope();
+        auto&& condition = generate_expression();
+        auto&& body      = generate_scope();
+
+
+        if (settings_.guaranteed_to_end_while)
+        {
+            static unique_name_id_t id = 0;
+            auto&& tmp_var = last::node::create(last::node::Variable{"save_while_tmp_var_" + std::to_string(id++)});
+            auto&& zero = last::node::create(last::node::NumberLiteral{0});
+            auto&& one = last::node::create(last::node::NumberLiteral{1});
+            auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
+            auto&& tmp_var_init = last::node::create(last::node::BinaryOperator
+                {
+                    last::node::BinaryOperator::ASGN,
+                    tmp_var,
+                    std::move(zero)
+                }
+            );
+
+            auto&& tmp_var_inc = last::node::create(last::node::BinaryOperator
+                {
+                    last::node::BinaryOperator::ADDASGN,
+                    std::move(tmp_var),
+                    std::move(one)
+                }
+            );
+
+            auto&& limit_check = last::node::create(last::node::BinaryOperator
+                {
+                    last::node::BinaryOperator::ISLSE,
+                    std::move(tmp_var_inc),
+                    std::move(iteration_limits)
+                }
+            );
+            condition = last::node::create(last::node::BinaryOperator
+                {
+                    last::node::BinaryOperator::AND,
+                    std::move(condition),
+                    std::move(limit_check)
+                }
+            );
+
+            auto&& while_node = last::node::create(last::node::While
+                {
+                    std::move(condition),
+                    std::move(body)
+                }
+            );
+
+            auto&& init_and_while = last::node::create(last::node::LinearSequence
+                {
+                    std::move(tmp_var_init),
+                    std::move(while_node),
+                }
+            );
+
+            return init_and_while;
+        }
 
         return last::node::create(last::node::While{
             std::move(condition),
@@ -520,7 +577,7 @@ private:
         {
             if (rhs.is_a<last::node::NumberLiteral>())
             {
-                auto&& number = static_cast<last::node::NumberLiteral const &>(rhs);
+                auto&& number = static_cast<last::node::NumberLiteral>(rhs);
                 if (number.value() == 0)
                     rhs = last::node::create(last::node::NumberLiteral{1});
             }
