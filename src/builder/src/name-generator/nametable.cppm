@@ -2,6 +2,7 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#include <cinttypes>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -45,9 +46,10 @@ class Nametable
     void             leave_scope           ();
     void             declare               (unique_name_id_t id);
 
-    unique_name_id_t get_new_unique_name_id()                    const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>);
-    unique_name_id_t get_absolute_new_unique_name_id()           const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>);
+    unique_name_id_t get_new_unique_name_id()                    const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>);
+    unique_name_id_t get_absolute_new_unique_name_id()           const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>);
 
+    size_t           size                  ()                    const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>);
     bool             exists                (unique_name_id_t id) const;
     bool             empty                 ()                    const;
 
@@ -101,20 +103,19 @@ void Nametable::leave_scope()
     }
 
     unique_name_id_ -= counter;
-    scopes_.pop_back(); // в одном scope создали id = 0, вышел из scope
-                        // считчик уменьшился и в новом scope сново содается id = 0
+    scopes_.pop_back();
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-unique_name_id_t Nametable::get_new_unique_name_id() const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>)
+unique_name_id_t Nametable::get_new_unique_name_id() const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>)
 {
     return unique_name_id_;
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-unique_name_id_t Nametable::get_absolute_new_unique_name_id() const noexcept(std::is_nothrow_copy_constructible_v<unique_name_id_t>)
+unique_name_id_t Nametable::get_absolute_new_unique_name_id() const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>)
 {
     return unique_names_at_all_time_quant_;
 }
@@ -148,8 +149,7 @@ void Nametable::declare(unique_name_id_t id)
     if ((unique_name_id_ == unique_names_at_all_time_quant_) or (id < unique_names_at_all_time_quant_))
         ++unique_name_id_;
 
-    if (unique_names_at_all_time_quant_ < unique_name_id_)
-        unique_names_at_all_time_quant_ = unique_name_id_;
+    ++unique_names_at_all_time_quant_;
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -177,6 +177,19 @@ std::vector<unique_name_id_t> Nametable::get_existing_variables() const
 
     return existing_variables;
 }
+
+//---------------------------------------------------------------------------------------------------------------
+
+size_t Nametable::size() const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>)
+{
+    auto&& size = 0LU;
+
+    for (auto&& scope: scopes_)
+        size += scope.size();
+
+    return size;
+}
+
 
 //---------------------------------------------------------------------------------------------------------------
 } /* namespace test_generator */

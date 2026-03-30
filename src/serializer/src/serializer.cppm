@@ -355,7 +355,6 @@ void visit(FunctionCall const & node, std::ostream& os, size_t enclosure, test_g
 } /* namespace visit_specializations */
 } /* namespace last::node */
 
-
 namespace test_generator
 {
 

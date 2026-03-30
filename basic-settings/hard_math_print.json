@@ -18,5 +18,5 @@
     "next-stmt-p": 0.999,
     "continue-expr-max-p": 0.99999,
     "max-expression-depth": 100,
-    "max-statement-depth": 7
+    "max-scope-depth": 7
 }

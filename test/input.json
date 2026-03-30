@@ -17,6 +17,6 @@
     },
     "next-stmt-p": 0.9,
     "continue-expr-max-p": 0.9,
-    "max-expression-depth": 100,
-    "max-statement-depth": 7
+    "max-expression-depth": 10,
+    "max-scope-depth": 7
 }

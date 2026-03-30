@@ -1,22 +1,22 @@
 {
     "statements-weights": {
-        "declaration": 20,
+        "declaration": 1,
         "while": 0,
         "expression": 0,
         "if": 0,
-        "print": 5,
-        "scope": 30
+        "print": 1,
+        "scope": 0
     },
     "expressions-weights": {
-        "binop": 0,
-        "unop": 0,
+        "binop": 15,
+        "unop": 15,
         "print": 0,
         "in": 0,
-        "variable": 2,
+        "variable": 1,
         "number": 1
     },
-    "next-stmt-p": 0.85,
-    "continue-expr-max-p": 0,
+    "next-stmt-p": 0.999,
+    "continue-expr-max-p": 0.99999,
     "max-expression-depth": 100,
-    "max-statement-depth": 7
+    "max-scope-depth": 7
 }

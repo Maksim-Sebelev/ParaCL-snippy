@@ -172,7 +172,7 @@ private:
                 return generate_print();
 
             case Expression::AssignmentExpr:
-                return generate_variable_declaration();
+                return generate_assign();
 
             default:
                 throw std::runtime_error("Invalid terminal expression selected");
@@ -236,7 +236,7 @@ public:
 private:
     BasicNode generate_scope()
     {
-        if (statement_depth_ > settings_.max_statement_depth)
+        if (statement_depth_ > settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
         name_generator_.new_scope();
@@ -284,7 +284,7 @@ private:
                 return generate_print();
 
             case Statement::VariableDeclarationStmt:
-                return generate_variable_declaration();
+                return generate_assign();
 
             case Statement::ExpressionStmt:
                 return generate_expression();
@@ -318,7 +318,7 @@ private:
                 return generate_if();
 
             case Statement::VariableDeclarationStmt:
-                return generate_variable_declaration();
+                return generate_assign();
 
             case Statement::PrintStmt:
                 return generate_print();
@@ -348,7 +348,7 @@ private:
 private:
     BasicNode generate_while()
     {
-        if (statement_depth_ >= settings_.max_statement_depth)
+        if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
         auto condition = generate_expression();
@@ -362,7 +362,7 @@ private:
 
     BasicNode generate_if()
     {
-        if (statement_depth_ >= settings_.max_statement_depth)
+        if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
         auto condition = generate_expression();
@@ -376,25 +376,24 @@ private:
         return last::node::create(last::node::Condition({std::move(if_node)}, {}));
     }
 
-    BasicNode generate_variable_declaration()
+    BasicNode generate_assign()
     {
-        auto&& kind_dist    = std::uniform_int_distribution<int> (0, 10);
-        auto&& kind         = kind_dist(random_); kind = 1;
-        auto&& new_variable = (kind == 0);
-        auto&& variable     = (new_variable) ? name_generator_.generate_new_variable () : name_generator_.generate_absolute_new_variable ();
-        auto&& variable_id  = (new_variable) ? name_generator_.get_new_unique_name_id() : name_generator_.get_absolute_new_unique_name_id();
+        // generating expression before,
+        // cause if variables will be declared before, 
+        // generator will use this variable
+        // (for exmample can be situation:
+        // var = var + 1
+        // but var was not declared in this statement
+    
         auto&& value        = generate_expression();
 
-        /* we must check exists variable or not, cause situations like:
-            var_0 = (var_0 = 1);
-                  ^ generate this assignment, (var_0 = 1) is value
-            are possible
-        */
+        auto&& kind_dist    = std::uniform_int_distribution<int> (0, 1);
+        auto&& kind         = kind_dist(random_);
+        auto&& new_variable = (kind == 0);
+        auto&& variable     = (new_variable) ? name_generator_.generate_new_variable () : name_generator_.generate_absolute_new_variable ();
 
-        if (not name_generator_.exists(variable_id))
-            name_generator_.declare(variable_id);
-
-        return last::node::create(last::node::BinaryOperator{
+        return last::node::create(last::node::BinaryOperator
+        {
             last::node::BinaryOperator::ASGN,
             std::move(variable),
             std::move(value)
@@ -421,12 +420,11 @@ private:
         return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
     }
 
-    BasicNode generate_variable()
+    BasicNode generate_variable(unique_name_id_t id = NameGenerator::RandomExistingName)
     {
         if (name_generator_.empty()) throw std::runtime_error("Requests generation of variable when exists no variables yet");
-        return name_generator_.generate_existing_variable();
+        return name_generator_.generate_existing_variable(id);
     }
-
 
     BasicNode generate_expression()
     {
@@ -443,6 +441,7 @@ private:
 
         /* if (not unterminal_expression) - exists no unterminal expression with positive weights,
            so we can only generate terminal expression */
+
         auto&& unterminal_expression = generate_unterminal_expression();
         if (unterminal_expression) return unterminal_expression;
     

@@ -16,7 +16,7 @@ export module name_generator;
 //---------------------------------------------------------------------------------------------------------------
 
 export import thelast;
-import name_generator_nametable;
+export import name_generator_nametable;
 import ast_serializer;
 
 //---------------------------------------------------------------------------------------------------------------
@@ -50,6 +50,7 @@ public:
     using Nametable::leave_scope;
     using Nametable::exists;
     using Nametable::empty;
+    using Nametable::size;    
 
 private:
     static std::string generate_name_by_id(unique_name_id_t id)
@@ -70,6 +71,9 @@ private:
         assert(id <= get_absolute_new_unique_name_id());
 
         /* declaration must be done outside */
+
+        if (not exists(id))
+            declare(id);
 
         auto&& name = generate_name_by_id(id);
 

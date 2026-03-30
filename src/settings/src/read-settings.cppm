@@ -186,7 +186,7 @@ void read_max_statement_depth(boost::json::value const & jv, SnippySettings& set
 {
     auto&& root_obj = jv.as_object();
 
-    auto&& key = "max-statement-depth";
+    auto&& key = "max-scope-depth";
     if (not root_obj.contains(key)) return;
 
     auto&& json_val = root_obj.at(key);
@@ -196,7 +196,7 @@ void read_max_statement_depth(boost::json::value const & jv, SnippySettings& set
         auto&& value = json_val.as_int64();
         if (value >= 0)
         {
-            settings.max_statement_depth = static_cast<size_t>(value);
+            settings.max_scope_depth = static_cast<size_t>(value);
             return;
         }
         throw std::runtime_error("Field '" + std::string(key) + "' must non negative integer.");
