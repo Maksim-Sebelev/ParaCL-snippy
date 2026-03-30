@@ -234,13 +234,13 @@ private:
 
     bool will_generate_new_statement()
     {
-        auto dist = std::bernoulli_distribution{generate_next_statement_probability_};
+        auto&& dist = std::bernoulli_distribution{generate_next_statement_probability_};
         return dist(random_);
     }
 
     bool will_continue_expression()
     {
-        auto dist = std::bernoulli_distribution{continue_expression_probability_};
+        auto&& dist = std::bernoulli_distribution{continue_expression_probability_};
         return dist(random_);
     }
 
@@ -457,10 +457,10 @@ private:
         if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
-        auto condition = generate_expression();
-        auto body      = generate_scope();
+        auto&& condition = generate_expression();
+        auto&& body      = generate_scope();
 
-        auto if_node = last::node::create(last::node::If{
+        auto&& if_node = last::node::create(last::node::If{
             std::move(condition),
             std::move(body)
         });
@@ -475,7 +475,7 @@ private:
         // generator will use this variable
         // (for exmample can be situation:
         // var = var + 1
-        // but var was not declared in this statement
+        // but var was not declared in this statement yet
 
         auto&& value        = generate_expression();
 
@@ -495,7 +495,7 @@ private:
     BasicNode generate_print()
     {
         std::uniform_int_distribution<std::size_t> argc_dist(1, 3);
-        auto argc = argc_dist(random_);
+        auto&& argc = argc_dist(random_);
 
         std::vector<BasicNode> args = {generate_expression()};
 
@@ -562,7 +562,7 @@ private:
         };
 
         std::uniform_int_distribution<std::size_t> dist(0, ops.size() - 1);
-        auto op = ops[dist(random_)];
+        auto&& op = ops[dist(random_)];
 
         BasicNode lhs;
         BasicNode rhs;
@@ -674,7 +674,7 @@ private:
         };
 
         std::uniform_int_distribution<std::size_t> dist(0, ops.size() - 1);
-        auto op = ops[dist(random_)];
+        auto&& op = ops[dist(random_)];
 
         update_continue_expression_probability();
         --expression_depth_;
@@ -688,10 +688,7 @@ private:
 public:
     last::AST generate_random_ast()
     {
-        auto root = generate_scope();
-
-        // test_generator::NameGenerator name_generator(random_);
-
+        auto&& root = generate_scope();
         return last::AST(std::move(root));
     }
 };

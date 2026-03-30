@@ -46,18 +46,18 @@ export
 struct SnippySettings
 {
     probability_t generate_next_statement_probability = 0.9;
-    probability_t continue_expression_max_probability = 0.8;
+    probability_t continue_expression_max_probability = 0.6;
 
     std::array<weight_t, Statement ::STATEMENTS_SIZE>  statements_weights;
     std::array<weight_t, Expression::EXPRESSIONS_SIZE> expressions_weights;
 
-    size_t max_scope_depth = 7;
-    size_t max_expression_depth = 100;
+    size_t max_scope_depth = 4;
+    size_t max_expression_depth = 10;
 
     bool save_div                : 1  = true;
     bool guaranteed_to_end_while : 1  = true;
 
-    size_t while_iterations_limit = 100;
+    size_t while_iterations_limit = 30;
 
     constexpr SnippySettings()
     {
@@ -77,7 +77,7 @@ struct SnippySettings
         expressions_weights[Expression::UnaryOperatorExpr    ] = 1;
         expressions_weights[Expression::VariableExpr         ] = 1;
         expressions_weights[Expression::NumberLiteralExpr    ] = 1;
-        expressions_weights[Expression::InExpr               ] = 1;
+        expressions_weights[Expression::InExpr               ] = 0;
         expressions_weights[Expression::PrintExpr            ] = 1;
     }
 };
