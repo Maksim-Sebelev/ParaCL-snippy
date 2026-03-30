@@ -13,9 +13,9 @@ module;
 #include <boost/json/object.hpp>
 #include <iostream>
 
-export module test_generator_settings_reader;
+export module settings_reader;
 
-export import test_generator_settings;
+export import settings;
 
 namespace test_generator
 {
@@ -239,14 +239,13 @@ SnippySettings read_settings_(std::string_view json_data)
 export
 SnippySettings read_settings(std::filesystem::path const & setting_json)
 {
-    auto ifs = std::ifstream{setting_json};
+    auto&& ifs = std::ifstream{setting_json};
 
-    if (ifs.fail())
-        throw std::runtime_error("No such file: `"+setting_json.string()+"`");
+    if (ifs.fail()) return SnippySettings{}; // if no file specialized, using default settings
 
-    auto buffer = std::ostringstream{};
+    auto&& buffer = std::ostringstream{};
     buffer << ifs.rdbuf();
-    auto json_data = buffer.str();
+    auto&& json_data = buffer.str();
 
     return read_settings_(json_data);
 }

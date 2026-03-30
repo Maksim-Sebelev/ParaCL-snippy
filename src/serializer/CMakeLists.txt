@@ -45,7 +45,7 @@ PUBLIC
 target_link_libraries(${PARACL_SNIPPY_AST_SERIALIZER_LIB}
 PUBLIC
     TheLast::TheLast
-    test-generator-settings
+    test-generator-options
 )
 
 # =================================================================================================

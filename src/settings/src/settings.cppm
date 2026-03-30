@@ -4,7 +4,7 @@ module;
 #include <filesystem>
 #include <array>
 
-export module test_generator_settings;
+export module settings;
 
 namespace test_generator
 {

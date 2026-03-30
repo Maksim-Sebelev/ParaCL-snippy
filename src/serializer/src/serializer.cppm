@@ -2,7 +2,7 @@ module;
 
 #include <cstddef>
 #include <filesystem>
-#include <ostream>
+#include <iostream>
 #include <fstream>
 #include <chrono>
 #include <string>
@@ -10,7 +10,7 @@ module;
 export module ast_serializer;
 
 export import thelast;
-export import test_generator_settings;
+export import options;
 
 namespace test_generator
 {
@@ -359,16 +359,33 @@ namespace test_generator
 {
 
 export
-void serialize(last::AST const & ast, test_generator::SnippySettings const & settings)
+void serialize(last::AST const & ast, test_generator::Options const & options)
 {
-    auto&& ofs = std::ofstream{settings.output_file};
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    auto&& ofs = std::ofstream{options.output_file};
+    if (ofs.fail())
+        throw std::runtime_error("Failed open: " + options.output_file.string() + " for ast serializing");
 
-    std::time_t t_c      = std::chrono::system_clock::to_time_t(now);
-    std::tm     tm_local = *std::localtime(&t_c);
+    auto&& now = std::chrono::system_clock::now();
+
+    auto&& t_c      = std::chrono::system_clock::to_time_t(now);
+    auto&& tm_local = *std::localtime(&t_c);
 
     ofs << "// Automatic generated with '" << "ParaCL-snippy" << "'\n"
-        << "// " << std::put_time(&tm_local, "%Y-%m-%d %H:%M:%S") << "\n\n";
+        << "// " << std::put_time(&tm_local, "%Y-%m-%d %H:%M:%S") << "\n";
+
+    if (not options.settings_file.string().empty())
+    {
+        auto&& ifs = std::ifstream{options.settings_file};
+        if (ifs.fail()) throw std::runtime_error("No such file: '" + options.settings_file.string() + "'");
+
+        ofs << "\n// generating settings (" << options.settings_file << "):\n/*\n";
+        ofs << ifs.rdbuf();
+        ofs << "*/\n\n";
+    }
+    else
+    {
+        ofs << "// generate with default settings.\n\n";
+    }
 
     last::node::serialize(ast.root(), ofs, 0, test_generator::BuildProgramSetting::GlobalScope);
 }

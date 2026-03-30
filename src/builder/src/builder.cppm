@@ -15,7 +15,7 @@ module;
 export module ast_builder;
 
 export import thelast;
-export import test_generator_settings;
+export import settings;
 import name_generator;
 import ast_serializer;
 
@@ -384,7 +384,7 @@ private:
         // (for exmample can be situation:
         // var = var + 1
         // but var was not declared in this statement
-    
+
         auto&& value        = generate_expression();
 
         auto&& kind_dist    = std::uniform_int_distribution<int> (0, 1);
@@ -444,7 +444,7 @@ private:
 
         auto&& unterminal_expression = generate_unterminal_expression();
         if (unterminal_expression) return unterminal_expression;
-    
+
         return generate_terminal_expression();
     }
 

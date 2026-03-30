@@ -32,7 +32,7 @@ export
 class NameGenerator : private Nametable
 {
 public:
-    enum : unique_name_id_t  { RandomExistingName = std::numeric_limits<unique_name_id_t>::max() };
+    enum : unique_name_id_t  { RandomExistingName = std::numeric_limits<unique_name_id_t>::max(), UniqueName = RandomExistingName - 1 };
 private:
     static const constexpr std::string variables_name_base_ = "var_";
 
@@ -69,8 +69,6 @@ private:
     {
         assert(id != RandomExistingName);
         assert(id <= get_absolute_new_unique_name_id());
-
-        /* declaration must be done outside */
 
         if (not exists(id))
             declare(id);

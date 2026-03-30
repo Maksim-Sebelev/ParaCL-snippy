@@ -2,6 +2,7 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#include <limits>
 #include <cinttypes>
 #include <ranges>
 #include <stdexcept>
@@ -40,6 +41,7 @@ class Nametable
     size_t unique_name_id_ = 0;
     size_t unique_names_at_all_time_quant_ = 0;
     bool unique_names_at_all_time_quant_is_greater_than_unique_name_id = false;
+    size_t unique_users_names_id = std::numeric_limits<size_t>::max();
 
   public:
     void             new_scope             ();
@@ -189,7 +191,6 @@ size_t Nametable::size() const noexcept(std::is_nothrow_convertible_v<size_t, un
 
     return size;
 }
-
 
 //---------------------------------------------------------------------------------------------------------------
 } /* namespace test_generator */

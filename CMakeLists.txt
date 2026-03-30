@@ -51,6 +51,7 @@ add_subdirectory(
     ${CMAKE_BINARY_DIR}/subproject/ast
 )
 
+add_subdirectory(${TEST_GENERATOR_SRC_DIR}/options)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/settings)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/builder)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/serializer)
@@ -68,14 +69,12 @@ PRIVATE
 
 target_link_libraries(${TEST_GENERATOR_EXE}
 PRIVATE
+    test-generator-options
+    test-generator-options-reader
     test-generator-settings
     test-generator-settings-reader
     ast-random-builder
     ast-serializer
 )
-
-message("${PARACL_SNIPPY_NAME_GENERATOR_LIB}")
-message("${PARACL_SNIPPY_AST_SERIALIZER_LIB}")
-message("${PARACL_SNIPPY_SETTINGS_LIB}")
 
 # =================================================================================================

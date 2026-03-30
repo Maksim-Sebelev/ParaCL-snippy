@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.28)
 
+
+cmake_minimum_required(VERSION 3.28)
+
 # =================================================================================================
 
-project(ParaCL-snippy-name-generator
+project(ParaCL-snippy-options
     LANGUAGES CXX
     VERSION 1.0
 )
@@ -23,48 +26,49 @@ endif()
 
 # =================================================================================================
 
-find_package(Boost REQUIRED COMPONENTS json)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 # =================================================================================================
 
-set(PARACL_SNIPPY_SETTINGS_LIB test-generator-settings)
-add_library(${PARACL_SNIPPY_SETTINGS_LIB})
+set(PARACL_SNIPPY_OPTIONS_LIB test-generator-options)
+add_library(${PARACL_SNIPPY_OPTIONS_LIB})
 
-set(PARACL_SNIPPY_SETTINGS_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(PARACL_SNIPPY_SETTINGS_SRCS
-    ${PARACL_SNIPPY_SETTINGS_SRC_DIR}/settings.cppm
+set(PARACL_SNIPPY_OPTIONS_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(PARACL_SNIPPY_OPTIONS_SRCS
+    ${PARACL_SNIPPY_OPTIONS_SRC_DIR}/options.cppm
 )
 
-target_sources(${PARACL_SNIPPY_SETTINGS_LIB}
+target_sources(${PARACL_SNIPPY_OPTIONS_LIB}
 PUBLIC
     FILE_SET CXX_MODULES
     TYPE CXX_MODULES
     FILES
-        ${PARACL_SNIPPY_SETTINGS_SRCS}
+        ${PARACL_SNIPPY_OPTIONS_SRCS}
 )
 
 # =================================================================================================
 
-set(PARACL_SNIPPY_SETTINGS_READER_LIB test-generator-settings-reader)
-add_library(${PARACL_SNIPPY_SETTINGS_READER_LIB})
+set(PARACL_SNIPPY_OPTIONS_READER_LIB test-generator-options-reader)
+add_library(${PARACL_SNIPPY_OPTIONS_READER_LIB})
 
-set(PARACL_SNIPPY_SETTINGS_READER_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(PARACL_SNIPPY_SETTINGS_READER_SRCS
-    ${PARACL_SNIPPY_SETTINGS_READER_SRC_DIR}/read-settings.cppm
+set(PARACL_SNIPPY_OPTIONS_READER_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(PARACL_SNIPPY_OPTIONS_READER_SRCS
+    ${PARACL_SNIPPY_OPTIONS_READER_SRC_DIR}/read-options.cppm
 )
 
-target_sources(${PARACL_SNIPPY_SETTINGS_READER_LIB}
+target_sources(${PARACL_SNIPPY_OPTIONS_READER_LIB}
 PUBLIC
     FILE_SET CXX_MODULES
     TYPE CXX_MODULES
     FILES
-        ${PARACL_SNIPPY_SETTINGS_READER_SRCS}
+        ${PARACL_SNIPPY_OPTIONS_READER_SRCS}
 )
 
-target_link_libraries(${PARACL_SNIPPY_SETTINGS_READER_LIB}
+target_link_libraries(${PARACL_SNIPPY_OPTIONS_READER_LIB}
 PUBLIC
-    ${PARACL_SNIPPY_SETTINGS_LIB}
-    Boost::json
+    ${PARACL_SNIPPY_OPTIONS_LIB}
+PRIVATE
+    Boost::program_options
 )
 
 # =================================================================================================
