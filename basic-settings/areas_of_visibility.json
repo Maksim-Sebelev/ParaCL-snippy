@@ -5,7 +5,9 @@
         "expression": 0,
         "if": 0,
         "print": 0,
-        "scope": 30
+        "scope": 30,
+        "comment": 0,
+        "semicolon": 0
     },
     "expressions-weights": {
         "binop": 0,

@@ -291,7 +291,7 @@ void visit(Comment const & node, unique_node_id_t unique_node_id, std::ofstream&
 //-----------------------------------------------------------------------------
 
 template <>
-void visit(Semicolon const & node, unique_node_id_t unique_node_id, std::ofstream& os)
+void visit(Semicolon const &, unique_node_id_t unique_node_id, std::ofstream& os)
 {
     auto&& label = ";";
     graphic_dump::create_node(os, unique_node_id, label);

@@ -40,8 +40,6 @@ class Nametable
     /* here size_t is not a unique_name_id_t */
     size_t unique_name_id_ = 0;
     size_t unique_names_at_all_time_quant_ = 0;
-    bool unique_names_at_all_time_quant_is_greater_than_unique_name_id = false;
-    size_t unique_users_names_id = std::numeric_limits<size_t>::max();
 
   public:
     void             new_scope             ();
@@ -92,13 +90,9 @@ void Nametable::leave_scope()
 
     if (scopes_.empty()) throw std::runtime_error("Trying leave scope in empty nametable");
 
-    auto&& back = scopes_.back();
-    if (not back.empty())
-        unique_names_at_all_time_quant_is_greater_than_unique_name_id = true;
-
     auto&& counter = 0LU;
 
-    for (auto&& name: back)
+    for (auto&& name: scopes_.back())
     {
         if (name >= unique_name_id_) continue;
         ++counter;

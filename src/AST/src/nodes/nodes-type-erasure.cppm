@@ -262,7 +262,7 @@ public:
     /* check is the real node type T */
     template <typename T>
     bool is_a() const
-    { return (typeid(T) == self_->type_()); }
+    { return (self_ and (typeid(T) == self_->type_())); }
 
     /* check that self is not nullptr */
     /* implicit */ operator bool() const noexcept

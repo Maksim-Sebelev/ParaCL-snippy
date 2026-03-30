@@ -54,6 +54,9 @@ struct SnippySettings
     size_t max_scope_depth = 7;
     size_t max_expression_depth = 100;
 
+    bool guaranteed_to_end_while = true;
+    bool save_div                = true;
+
     constexpr SnippySettings()
     {
         // statements weights

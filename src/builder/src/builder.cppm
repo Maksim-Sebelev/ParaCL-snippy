@@ -516,6 +516,51 @@ private:
         std::uniform_int_distribution<std::size_t> dist(0, ops.size() - 1);
         auto op = ops[dist(random_)];
 
+        if ((op == last::node::BinaryOperator::DIV) and settings_.save_div)
+        {
+            if (rhs.is_a<last::node::NumberLiteral>())
+            {
+                auto&& number = static_cast<last::node::NumberLiteral const &>(rhs);
+                if (number.value() == 0)
+                    rhs = last::node::create(last::node::NumberLiteral{1});
+            }
+            else
+            {
+                static unique_name_id_t save_div_tmp_var_id = 0;
+                /*
+                    something / expr
+                        ->
+                    something / ((save_div_tmp_var = expr) == 0 + save_div_tmp_var)
+                */
+                auto&& zero     = last::node::create(last::node::NumberLiteral{0});
+                auto&& tmp_var  = last::node::create(last::node::Variable{"save_div_tmp_var_" + std::to_string(save_div_tmp_var_id++)});
+
+                auto&& set_expression_to_variable = last::node::create(last::node::BinaryOperator
+                    {
+                        last::node::BinaryOperator::ASGN,
+                        tmp_var,
+                        std::move(rhs)
+                    }
+                );
+
+                auto&& compare_expression_with_null = last::node::create(last::node::BinaryOperator
+                    {
+                        last::node::BinaryOperator::ISEQ,
+                        std::move(set_expression_to_variable),
+                        std::move(zero)
+                    }
+                );
+                
+                rhs = last::node::create(last::node::BinaryOperator
+                    {
+                        last::node::BinaryOperator::ADD,
+                        std::move(compare_expression_with_null),
+                        std::move(tmp_var)
+                    }
+                );
+            }
+        }
+
         update_continue_expression_probability();
         --expression_depth_;
 
