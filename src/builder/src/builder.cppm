@@ -481,9 +481,10 @@ private:
         if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
-        auto&& condition = generate_expression();
-        auto&& body      = generate_scope();
+        // needs generate body after generation of tmp var,
+        // to in code tmp varis went in otder by their numbers
 
+        auto&& condition = generate_expression();
 
         if (settings_.guaranteed_to_end_while)
         {
@@ -523,6 +524,8 @@ private:
                 }
             );
 
+            auto&& body = generate_scope();
+
             auto&& while_node = last::node::create(last::node::While
                 {
                     std::move(condition),
@@ -539,6 +542,8 @@ private:
 
             return init_and_while;
         }
+
+        auto&& body = generate_scope();
 
         return last::node::create(last::node::While{
             std::move(condition),
