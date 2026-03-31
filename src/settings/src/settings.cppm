@@ -56,7 +56,6 @@ struct SnippySettings
 
     bool save_div                : 1 = true;
     bool guaranteed_to_end_while : 1 = true;
-    bool bad_tests               : 1 = true;
 
     size_t while_iterations_limit = 30;
 

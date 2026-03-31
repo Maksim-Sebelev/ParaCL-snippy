@@ -593,17 +593,7 @@ private:
 
     BasicNode generate_number()
     {
-        // if (not settings_.bad_tests)
-            // return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
-
-        // auto&& kind_dist = std::uniform_int_distribution<int>(0, 10);
-        // auto&& kind = (kind_dist(random_) == 0);
-
-        // if (not kind) return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
-
-        static size_t counter = 0LU;
-        auto&& msg = std::string(пасхалка_[counter++]);
-        return last::node::create(last::node::StringLiteral{std::move(msg)});
+        return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
     }
 
     BasicNode generate_variable(unique_name_id_t id = NameGenerator::RandomExistingName)
@@ -614,18 +604,8 @@ private:
 
     BasicNode generate_expression()
     {
-        if (not settings_.bad_tests)
-        {
-            reset_continue_expression_probability();
-            return generate_expression_impl();
-        }
-
-        auto&& kind_dist = std::uniform_int_distribution<int>(0, 10);
-        auto&& kind = (kind_dist(random_) == 0);
-
-        if (kind) return generate_statement();
-    
-        return generate_expression();
+        reset_continue_expression_probability();
+        return generate_expression_impl();
     }
 
     BasicNode generate_expression_impl()
@@ -705,9 +685,6 @@ private:
             else
                 rhs = generate_terminal_expression();
         }
-
-        // TODO: remove next line
-        // lhs = generate_statement();
 
         if ((op == last::node::BinaryOperator::DIV ||
             op == last::node::BinaryOperator::DIVASGN) &&
