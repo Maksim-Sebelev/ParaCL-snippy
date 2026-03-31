@@ -150,7 +150,32 @@ private:
         "Ели мясо мужики",
         "Пивом запивали",
         "О чём конюх говорил",
-        "Они не понимали"
+        "Они не понимали",
+        "__перерыв__",
+        "Замученный дорогой, я выбился из сил",
+        "И в доме лесника я ночлега попросил",
+        "С улыбкой добродушной старик меня впустил",
+        "И жестом дружелюбным на ужин пригласил, хэй!",
+        "Будь как дома, путник, я ни в чём не откажу",
+        "Я ни в чём не откажу, я ни в чём не откажу, хэй!",
+        "Множество историй, коль желаешь, расскажу",
+        "Коль желаешь, расскажу, коль желаешь, расскажу",
+        "На улице темнело, сидел я за столом",
+        "Лесник сидел напротив, болтал о том, о сём",
+        "Что нет среди животных у старика врагов",
+        "Что нравится ему подкармливать волков, хэй!",
+        "Будь как дома, путник, я ни в чём не откажу",
+        "Я ни в чём не откажу, я ни в чём не откажу. хэй!",
+        "Множество историй, коль желаешь, расскажу",
+        "Коль желаешь, расскажу, коль желаешь, расскажу",
+        "И волки среди ночи завыли под окном",
+        "Старик заулыбался и вдруг покинул дом",
+        "Но вскоре возвратился с ружьём наперевес",
+        "\"Друзья хотят покушать, пойдём, приятель, в лес!\"",
+        "Будь как дома, путник, я ни в чём не откажу",
+        "Я ни в чём не откажу, я ни в чём не откажу. хэй!",
+        "Множество историй, коль желаешь, расскажу",
+        "Коль желаешь, расскажу, коль желаешь, расскажу",
     };
 
 private:
@@ -385,7 +410,7 @@ private:
         };
 
         add_expression_if_its_possible(Statement::PrintStmt);
-        add_expression_if_its_possible(Statement::VariableDeclarationStmt);
+        add_expression_if_its_possible(Statement::AssignStmt);
         add_expression_if_its_possible(Statement::ExpressionStmt);
         add_expression_if_its_possible(Statement::SemicolonStmt);
         add_expression_if_its_possible(Statement::CommentStmt);
@@ -401,7 +426,7 @@ private:
             case Statement::PrintStmt:
                 return generate_print();
 
-            case Statement::VariableDeclarationStmt:
+            case Statement::AssignStmt:
                 return generate_assign();
 
             case Statement::ExpressionStmt:
@@ -441,7 +466,7 @@ private:
             case Statement::IfStmt:
                 return generate_if();
 
-            case Statement::VariableDeclarationStmt:
+            case Statement::AssignStmt:
                 return generate_assign();
 
             case Statement::PrintStmt:
@@ -646,7 +671,7 @@ private:
 
         ++expression_depth_;
 
-        static constexpr std::array<last::node::BinaryOperator::BinaryOperatorT, 10> ops =
+        static constexpr std::array<last::node::BinaryOperator::BinaryOperatorT, 14> ops =
         {
             last::node::BinaryOperator::ADD,
             last::node::BinaryOperator::SUB,
@@ -654,6 +679,10 @@ private:
             last::node::BinaryOperator::DIV,
             last::node::BinaryOperator::ISEQ,
             last::node::BinaryOperator::ISNE,
+            last::node::BinaryOperator::ISAB,
+            last::node::BinaryOperator::ISABE,
+            last::node::BinaryOperator::ISLS,
+            last::node::BinaryOperator::ISLSE,
             last::node::BinaryOperator::ADDASGN,
             last::node::BinaryOperator::SUBASGN,
             last::node::BinaryOperator::MULASGN,

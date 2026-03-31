@@ -62,7 +62,7 @@ void read_statements_weights(boost::json::value const & jv, SnippySettings& sett
     parse(Statement::ExpressionStmt         , "expression" );
     parse(Statement::WhileStmt              , "while"      );
     parse(Statement::IfStmt                 , "if"         );
-    parse(Statement::VariableDeclarationStmt, "declaration");
+    parse(Statement::AssignStmt, "declaration");
     parse(Statement::PrintStmt              , "print"      );
     parse(Statement::ScopeStmt              , "scope"      );
     parse(Statement::CommentStmt            , "comment"    );

@@ -22,7 +22,7 @@ enum /* NOT class */ Statement : size_t
     WhileStmt,
     IfStmt,
     PrintStmt,
-    VariableDeclarationStmt,
+    AssignStmt,
     ScopeStmt,
     SemicolonStmt,
     CommentStmt,
@@ -65,7 +65,7 @@ struct SnippySettings
         statements_weights[Statement::ExpressionStmt         ] = 1;
         statements_weights[Statement::WhileStmt              ] = 1;
         statements_weights[Statement::IfStmt                 ] = 1;
-        statements_weights[Statement::VariableDeclarationStmt] = 1;
+        statements_weights[Statement::AssignStmt             ] = 1;
         statements_weights[Statement::PrintStmt              ] = 1;
         statements_weights[Statement::ScopeStmt              ] = 1;
         statements_weights[Statement::SemicolonStmt          ] = 1;

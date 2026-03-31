@@ -144,137 +144,145 @@ print var_124 = (print (print print print var_100) / 75);
 Пример сгенерированного кода (это не весь код, а лишь вырезка, потому что код получается большим):
 
 ```c
-var_3 = -44;
-var_3;
-var_0;
-if (var_3)
+print -40;
+var_0 = 38;
+if (var_0)
 {
-    {
-        var_4 = var_2;
-        while (var_1)
-        {
-            print 89;
-            print print var_4;
-        }
-        var_0;
-        var_3;
-        if (var_2)
-        {
-            {
-                76;
-                var_190 = (print -96);
-                36;
-            }
-            -89;
-            {
-                var_191 = var_2;
-            }
-            {
-                print var_0;
-                var_5 = !-94;
-            }
-            var_5 = (var_193 = var_2);
-            var_6 = var_2;
-        }
-        print var_0;
-        96;
-        {
-            print -100;
-        }
-        print var_1;
-        {
-            print --99;
-            print var_1;
-            print -83;
-        }
-        var_5 = +var_1;
-    }
-    !-24;
+	;
+	var_1 = (var_0 == 91);
+	save_while_tmp_var_0 = 0;
+	while (32 && ((save_while_tmp_var_0 += 1) <= 10))
+	{
+		var_2 = -16;
+		// Ослепший старый маг
+		var_3 = var_0;
+		// Ночью по лесу бродил
+		{ // На кладбище разлил
+			var_3;
+			-61 != -75;
+			var_0 -= var_2;
+		}
+		var_4 = var_0;
+	}
+	save_while_tmp_var_1 = 0;
+	while (var_0 && ((save_while_tmp_var_1 += 1) <= 10))
+	{
+		save_while_tmp_var_2 = 0;
+		while (var_1 && ((save_while_tmp_var_2 += 1) <= 10))
+		{
+			// Он волшебный эликсир
+			// И лишь проговорил
+			print !-86;
+			var_5 = 38;;
+			22;
+			print !var_1;
+			var_0;
+			var_6 = (print -27);
+		}
+		print var_0;
+		{
+			var_2 = -66;
+			;;
+		}
+		;
+	}
+	var_0;
+	-42;
 }
+99;
 ```
-
-
 
 ## if.json
 
-Данная конфигурация реализует генерацию программы, в которой встречаются преимущественно if. 
+Данная конфигурация реализует генерацию программы, в которой встречаются преимущественно if.
 
 Пример сгенерированного кода (это не весь код, а лишь вырезка, потому что код получается большим):
 
 ```c
-if (-17)
+print 8;
+if (var_0 = -71)
 {
-    var_0 = -10;
-    if (+-33)
-    {
-        var_1 = var_0;
-    }
-    if (var_0)
-    {
-        var_1 = var_0;
-        var_2 = -73;
-    }
-    if (+var_0)
-    {
-        var_1 = +var_0;
-    }
-    if (-19)
-    {
-        var_5 = (-92 - var_0);
-        var_6 = var_0;
-    }
-    if (27 / 41)
-    {
-        var_7 = -55;
-        var_1 = -var_7;
-        var_2 = var_7;
-        var_3 = 13;
-        var_11 = -70;
-        var_4 = var_0;
-        var_5 = -44;
-    }
-    var_14 = -60;
-    if (-61)
-    {
-        var_2 = (var_1 = var_0);
-    }
-    if (+-var_14 != (-93 + var_14))
-    {
-        var_1 = +-48;
-        var_2 = -10;
-        var_19 = (77 / -93);
-        var_20 = -25;
-    }
-    if (var_0)
-    {
-        var_22 = (var_21 = var_0);
-    }
-    if (var_14)
-    {
-        var_23 = (39 * -66);
-        var_25 = (!!!!(var_1 = (var_23 + 57)) - -64);
-        var_26 = +(var_0 / (((save_div_tmp_var_0 = var_1) == 0) + save_div_tmp_var_0));
-        var_27 = -50;
-    }
-    var_28 = (var_14 + var_14);
-    if (60)
-    {
-        var_29 = var_28;
-        var_1 = 40;
-        var_2 = var_28;
-        var_3 = var_28;
-        var_33 = -21;
-        var_34 = 61;
-        var_35 = var_34;
-        var_36 = 45;
-        var_37 = var_28;
-        var_4 = var_3;
-        var_5 = (var_4 / (((save_div_tmp_var_1 = var_1) == 0) + save_div_tmp_var_1));
-        var_40 = var_1;
-        var_6 = var_3;
-        var_42 = var_29;
-        var_43 = !var_6;
-    }
-    var_44 = (-23 != var_28);
+	var_1 = -12;
 }
+var_25 = var_0;
+print 29;
+if (-90)
+{
+	if (-71)
+	{
+		if (var_25)
+		{
+			var_26 = 73;
+			var_27 = (var_25 < 94);
+			var_28 = var_25;
+			print 11;
+			print 89;
+			var_29 = !var_27;
+			print var_26 -= var_25;
+		}
+		if (-9)
+		{
+			var_1 = var_25;
+			var_2 = var_0;
+			var_3 = var_2;
+		}
+		var_33 = 49;
+	}
+	if (-54)
+	{
+		var_34 = 3;
+		if (-(var_1 = -70))
+		{
+			var_36 = var_25;
+			var_37 = -53;
+			var_2 = var_37;
+			var_3 = -97;
+			print var_34 + var_36;
+		}
+	}
+}
+```
+
+## while.json
+
+Данная конфигурация реализует генерацию программы, в которой встречаются преимущественно if.
+
+Пример сгенерированного кода (это не весь код, а лишь вырезка, потому что код получается большим):
+
+```c
+print var_3 > var_1;
+save_while_tmp_var_22 = 0;
+while (var_3 && ((save_while_tmp_var_22 += 1) <= 10))
+{
+    var_64 = (-34 - var_2);
+    print 0;
+    print var_2;
+    print var_64;
+    print var_2;
+    print var_2 *= -50;
+    var_4 = var_3;
+    print var_0;
+    var_5 = (var_3 * -32);
+    print var_0 *= var_1;
+    var_68 = (var_67 = -27);
+    print var_5;
+    print -5;
+    print var_68;
+    var_69 = var_0;
+    print -18;
+    print var_3;
+    var_70 = (var_67 - (var_4 >= -58));
+    print var_5;
+}
+save_while_tmp_var_23 = 0;
+while ((var_0 < 31) && ((save_while_tmp_var_23 += 1) <= 10))
+{
+    var_4 = var_2;
+    var_5 = -88;
+    var_73 = -46;
+    print -60;
+    print 2;
+}
+print -49;
+print var_74 = (80 >= -37);
 ```
