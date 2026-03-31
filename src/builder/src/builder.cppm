@@ -179,46 +179,6 @@ private:
     };
 
 private:
-    void check_configuration()
-    {
-        auto&& has_statement_weight = false;
-        for (auto&& w : settings_.statements_weights)
-        {
-            if (w != 0)
-            {
-                has_statement_weight = true;
-                break;
-            }
-        }
-
-        if (!has_statement_weight)
-            throw std::runtime_error("All statement weights are zero. Incorrect generator configuration.");
-
-        auto&& has_expression_weight = false;
-        for (auto&& w : settings_.expressions_weights)
-        {
-            if (w != 0)
-            {
-                has_expression_weight = true;
-                break;
-            }
-        }
-
-        if (!has_expression_weight)
-            throw std::runtime_error("All expression weights are zero. Incorrect generator configuration.");
-
-        auto&& has_terminal_expression =
-            settings_.expressions_weights[Expression::NumberLiteralExpr] != 0 or
-            settings_.expressions_weights[Expression::InExpr           ] != 0;
-
-        if (not has_terminal_expression)
-            throw std::runtime_error(
-                "Both VariableExpr and NumberLiteralExpr weights are zero.\n"
-                "Terminal expressions are disabled, so the generator is incorrectly configured.\n"
-                "Also, only enabled Variables are useless, cause it`s impossible to use only variables, without other terminal expressions."
-            );
-    }
-
     BasicNode generate_semicolon()
     {
         auto&& kind_dist = std::uniform_int_distribution<int> (0, 1);
@@ -633,7 +593,17 @@ private:
 
     BasicNode generate_number()
     {
-        return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
+        // if (not settings_.bad_tests)
+            // return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
+
+        // auto&& kind_dist = std::uniform_int_distribution<int>(0, 10);
+        // auto&& kind = (kind_dist(random_) == 0);
+
+        // if (not kind) return last::node::create(last::node::NumberLiteral{std::uniform_int_distribution<int>(-100, 100)(random_)});
+
+        static size_t counter = 0LU;
+        auto&& msg = std::string(пасхалка_[counter++]);
+        return last::node::create(last::node::StringLiteral{std::move(msg)});
     }
 
     BasicNode generate_variable(unique_name_id_t id = NameGenerator::RandomExistingName)
@@ -644,8 +614,18 @@ private:
 
     BasicNode generate_expression()
     {
-        reset_continue_expression_probability();
-        return generate_expression_impl();
+        if (not settings_.bad_tests)
+        {
+            reset_continue_expression_probability();
+            return generate_expression_impl();
+        }
+
+        auto&& kind_dist = std::uniform_int_distribution<int>(0, 10);
+        auto&& kind = (kind_dist(random_) == 0);
+
+        if (kind) return generate_statement();
+    
+        return generate_expression();
     }
 
     BasicNode generate_expression_impl()
@@ -725,6 +705,9 @@ private:
             else
                 rhs = generate_terminal_expression();
         }
+
+        // TODO: remove next line
+        // lhs = generate_statement();
 
         if ((op == last::node::BinaryOperator::DIV ||
             op == last::node::BinaryOperator::DIVASGN) &&
@@ -822,7 +805,6 @@ public:
         continue_expression_probability_    (settings_.continue_expression_max_probability),
         делаем_пасхалку_(std::uniform_int_distribution<int>{0, 10}(random_) == 0)
     {
-        check_configuration();
     }
 
 public:

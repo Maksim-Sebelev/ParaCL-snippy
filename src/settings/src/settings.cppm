@@ -54,8 +54,9 @@ struct SnippySettings
     size_t max_scope_depth = 4;
     size_t max_expression_depth = 10;
 
-    bool save_div                : 1  = true;
-    bool guaranteed_to_end_while : 1  = true;
+    bool save_div                : 1 = true;
+    bool guaranteed_to_end_while : 1 = true;
+    bool bad_tests               : 1 = true;
 
     size_t while_iterations_limit = 30;
 
@@ -79,6 +80,42 @@ struct SnippySettings
         expressions_weights[Expression::NumberLiteralExpr    ] = 1;
         expressions_weights[Expression::InExpr               ] = 0;
         expressions_weights[Expression::PrintExpr            ] = 1;
+    }
+
+    void check_configuration() const
+    {
+        auto&& has_statement_weight = false;
+        for (auto&& w : statements_weights)
+        {
+            if (w == 0) continue;
+            has_statement_weight = true;
+            break;
+        }
+
+        if (!has_statement_weight)
+            throw std::runtime_error("All statement weights are zero. Incorrect generator configuration.");
+
+        auto&& has_expression_weight = false;
+        for (auto&& w : expressions_weights)
+        {
+            if (w == 0) continue;
+            has_expression_weight = true;
+            break;
+        }
+
+        if (!has_expression_weight)
+            throw std::runtime_error("All expression weights are zero. Incorrect generator configuration.");
+
+        auto&& has_terminal_expression =
+            expressions_weights[Expression::NumberLiteralExpr] != 0 or
+            expressions_weights[Expression::InExpr           ] != 0;
+
+        if (not has_terminal_expression)
+            throw std::runtime_error(
+                "Both VariableExpr and NumberLiteralExpr weights are zero.\n"
+                "Terminal expressions are disabled, so the generator is incorrectly configured.\n"
+                "Also, only enabled Variables are useless, cause it`s impossible to use only variables, without other terminal expressions."
+            );
     }
 };
 

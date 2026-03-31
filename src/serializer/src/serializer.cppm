@@ -30,7 +30,7 @@ enum class BuildProgramSetting
 };
 
 void write_n_tab(std::ostream& os, size_t tabs)
-{ os << "\n" << std::string(tabs, '\t'); }
+{ os << "\n" << std::string(tabs * 4, ' '); }
 
 void new_line(std::ostream& os)
 { os << "\n"; }
