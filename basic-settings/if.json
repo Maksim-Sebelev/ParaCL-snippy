@@ -1,7 +1,7 @@
 {
     "statements-weights": {
-        "declaration": 1,
         "while": 0,
+        "assign": 1,
         "expression": 0,
         "if": 2,
         "print": 1,

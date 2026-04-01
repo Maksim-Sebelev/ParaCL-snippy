@@ -43,6 +43,11 @@ PUBLIC
         ${PARACL_SNIPPY_SETTINGS_SRCS}
 )
 
+target_link_libraries(${PARACL_SNIPPY_SETTINGS_LIB}
+PUBLIC
+  TheLast::TheLast
+)
+
 # =================================================================================================
 
 set(PARACL_SNIPPY_SETTINGS_READER_LIB test-generator-settings-reader)
@@ -64,7 +69,9 @@ PUBLIC
 target_link_libraries(${PARACL_SNIPPY_SETTINGS_READER_LIB}
 PUBLIC
     ${PARACL_SNIPPY_SETTINGS_LIB}
+PRIVATE
     Boost::json
+    TheLast::TheLast
 )
 
 # =================================================================================================

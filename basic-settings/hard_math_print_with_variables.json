@@ -1,7 +1,7 @@
 {
     "statements-weights": {
-        "declaration": 1,
         "while": 0,
+        "assign": 1,
         "expression": 0,
         "if": 0,
         "print": 1,
@@ -17,9 +17,9 @@
         "variable": 1,
         "number": 1
     },
-    "next-stmt-p": 0.999,
-    "continue-expr-max-p": 0.99999,
-    "max-expression-depth": 100,
+    "next-stmt-p": 0.99,
+    "continue-expr-max-p": 1,
+    "max-expression-depth": 5,
     "max-scope-depth": 7,
     "save-div": true,
     "save-while": true

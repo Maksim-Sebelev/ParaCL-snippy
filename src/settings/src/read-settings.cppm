@@ -17,6 +17,8 @@ export module settings_reader;
 
 export import settings;
 
+import thelast;
+
 namespace test_generator
 {
 
@@ -26,27 +28,21 @@ weight_t extract_weight(const boost::json::value& val, const std::string& field_
     {
         auto&& v = val.as_int64();
         if (v >= 0) return static_cast<weight_t>(v);
-
-        throw std::runtime_error("Field '" + field_name + "' must be positive integer, but got " +
-                                    std::to_string(v));
     }
 
-    if (val.is_uint64())
-    {
-        return static_cast<weight_t>(val.as_uint64());
-    }
-
-    throw std::runtime_error("Field '" + field_name + "' has unsupported type. It must be a positive integer");
+    throw std::runtime_error("Field '" + field_name + "' must be positive integer");
 }
 
 void read_statements_weights(boost::json::value const & jv, SnippySettings& settings)
 {
     auto&& root_obj = jv.as_object();
 
-    if (not root_obj.contains("statements-weights"))
+    auto&& key = "statements-weights";
+
+    if (not root_obj.contains(key))
         return;
 
-    auto&& statements_weights_obj = root_obj.at("statements-weights");
+    auto&& statements_weights_obj = root_obj.at(key);
 
     if (not statements_weights_obj.is_object())
         throw std::runtime_error("Field 'statements-weights' must be an object");
@@ -59,24 +55,93 @@ void read_statements_weights(boost::json::value const & jv, SnippySettings& sett
             settings.statements_weights[id] = extract_weight(*val, name);
     };
 
-    parse(Statement::ExpressionStmt         , "expression" );
-    parse(Statement::WhileStmt              , "while"      );
-    parse(Statement::IfStmt                 , "if"         );
-    parse(Statement::AssignStmt, "declaration");
-    parse(Statement::PrintStmt              , "print"      );
-    parse(Statement::ScopeStmt              , "scope"      );
-    parse(Statement::CommentStmt            , "comment"    );
-    parse(Statement::SemicolonStmt          , "semicolon"  );
+    parse(Statement::ExpressionStmt, "expression" );
+    parse(Statement::WhileStmt     , "while"      );
+    parse(Statement::IfStmt        , "if"         );
+    parse(Statement::PrintStmt     , "print"      );
+    parse(Statement::AssignStmt    , "assign"     );
+    parse(Statement::ScopeStmt     , "scope"      );
+    parse(Statement::CommentStmt   , "comment"    );
+    parse(Statement::SemicolonStmt , "semicolon"  );
+}
+
+void read_binop_weights(boost::json::object const & jo, SnippySettings& settings)
+{
+    using BinaryOperator = last::node::BinaryOperator::BinaryOperatorT;
+
+
+    auto&& key = "binop-weights";
+    if (not jo.contains(key))
+        return;
+
+    auto&& expressions_weights_obj = jo.at(key);
+
+    if (not expressions_weights_obj.is_object())
+        throw std::runtime_error("Field 'binop-weights' must be an object");
+
+    auto&& weights = expressions_weights_obj.as_object();
+    auto&& parse = [&](BinaryOperator id, std::string name) -> void
+    {
+        if (auto&& val = weights.if_contains(name))
+            settings.binary_operators_weights[id] = extract_weight(*val, name);
+    };
+
+    parse(BinaryOperator::AND    , "and"    );
+    parse(BinaryOperator::OR     , "or"     );
+    parse(BinaryOperator::ADD    , "add"    );
+    parse(BinaryOperator::SUB    , "sub"    );
+    parse(BinaryOperator::MUL    , "mul"    );
+    parse(BinaryOperator::DIV    , "div"    );
+    parse(BinaryOperator::REM    , "rem"    );
+    parse(BinaryOperator::ASGN   , "asgn"   );
+    parse(BinaryOperator::ADDASGN, "addasgn");
+    parse(BinaryOperator::SUBASGN, "subasgn");
+    parse(BinaryOperator::MULASGN, "mulasgn");
+    parse(BinaryOperator::DIVASGN, "divasgn");
+    parse(BinaryOperator::REMASGN, "remasgn");
+    parse(BinaryOperator::ISEQ   , "iseq"   );
+    parse(BinaryOperator::ISNE   , "isne"   );
+    parse(BinaryOperator::ISAB   , "isab"   );
+    parse(BinaryOperator::ISABE  , "isabe"  );
+    parse(BinaryOperator::ISLS   , "isls"   );
+    parse(BinaryOperator::ISLSE  , "islse"  );
+}
+
+
+void read_unop_weights(boost::json::object const & jo, SnippySettings& settings)
+{
+    using UnaryOperator = last::node::UnaryOperator::UnaryOperatorT;
+
+    auto&& key = "unop-weights";
+    if (not jo.contains(key)) return;
+
+    auto&& expressions_weights_obj = jo.at(key);
+
+    if (not expressions_weights_obj.is_object())
+        throw std::runtime_error("Field 'unop-weights' must be an object");
+
+    auto&& weights = expressions_weights_obj.as_object();
+    auto&& parse = [&](UnaryOperator id, std::string name) -> void
+    {
+        if (auto&& val = weights.if_contains(name))
+            settings.unary_operators_weights[id] = extract_weight(*val, name);
+    };
+
+
+    parse(UnaryOperator::PLUS , "plus" );
+    parse(UnaryOperator::MINUS, "minus");
+    parse(UnaryOperator::NOT  , "not"  );
 }
 
 void read_expressions_weights(boost::json::value const & jv, SnippySettings& settings)
 {
     auto&& root_obj = jv.as_object();
+    auto&& key = "expressions-weights";
 
-    if (not root_obj.contains("expressions-weights"))
+    if (not root_obj.contains(key))
         return;
 
-    auto&& expressions_weights_obj = root_obj.at("expressions-weights");
+    auto&& expressions_weights_obj = root_obj.at(key);
 
     if (not expressions_weights_obj.is_object())
         throw std::runtime_error("Field 'expressions-weights' must be an object");
@@ -94,6 +159,9 @@ void read_expressions_weights(boost::json::value const & jv, SnippySettings& set
     parse(Expression::PrintExpr         , "print"   );
     parse(Expression::VariableExpr      , "variable");
     parse(Expression::NumberLiteralExpr , "number"  );
+
+    read_binop_weights(weights, settings);
+    read_unop_weights (weights, settings);
 }
 
 void read_generate_next_statement_probability(boost::json::value const & jv, SnippySettings& settings)
@@ -221,6 +289,24 @@ void read_save_div(boost::json::value const & jv, SnippySettings& settings)
     throw std::runtime_error("Field '" + std::string(key) + "' must be bool.");
 }
 
+void read_save_rem(boost::json::value const & jv, SnippySettings& settings)
+{
+    auto&& root_obj = jv.as_object();
+
+    auto&& key = "save-rem";
+    if (not root_obj.contains(key)) return;
+
+    auto&& json_value = root_obj.at(key);
+
+    if (json_value.is_bool())
+    {
+        auto&& value = json_value.as_bool();
+        settings.save_rem = static_cast<bool>(value);
+        return;
+    }
+    throw std::runtime_error("Field '" + std::string(key) + "' must be bool.");
+}
+
 void read_save_while(boost::json::value const & jv, SnippySettings& settings)
 {
     auto&& root_obj = jv.as_object();
@@ -275,6 +361,7 @@ SnippySettings read_settings_(std::string_view json_data)
     read_generate_next_statement_probability(jv, settings);
     read_continue_expression_max_probability(jv, settings);
     read_save_div(jv, settings);
+    read_save_rem(jv, settings);
     read_save_while(jv, settings);
     read_while_iterations_limit(jv, settings);
 

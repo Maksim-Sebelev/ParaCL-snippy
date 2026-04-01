@@ -125,8 +125,13 @@ export
 class UnaryOperator final
 {
 public:
-    enum UnaryOperatorT
-    { MINUS, PLUS, NOT };
+    enum UnaryOperatorT : size_t
+    {
+        MINUS = 0,
+        PLUS,
+        NOT,
+        UNOPS_SIZE
+    };
 private:
     BasicNode arg_;
     UnaryOperatorT type_;
@@ -156,9 +161,9 @@ export
 class BinaryOperator final
 {
 public:
-    enum BinaryOperatorT
+    enum BinaryOperatorT : size_t
     {
-        AND,
+        AND = 0,
         OR,
         ADD,
         SUB,
@@ -177,6 +182,7 @@ public:
         MULASGN, /* *= */
         DIVASGN, /* /= */
         REMASGN, /* %= */
+        BINOPS_SIZE,
     };
 
 private:

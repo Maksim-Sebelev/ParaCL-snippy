@@ -264,7 +264,6 @@ private:
         add_expression_if_its_possible(Expression::BinaryOperatorExpr);
         add_expression_if_its_possible(Expression::UnaryOperatorExpr);
         add_expression_if_its_possible(Expression::PrintExpr);
-        add_expression_if_its_possible(Expression::AssignmentExpr);
 
         if (expressions.empty())
             return BasicNode{};
@@ -283,9 +282,6 @@ private:
             case Expression::PrintExpr:
                 return generate_print();
 
-            case Expression::AssignmentExpr:
-                return generate_assign();
-
             default:
                 throw std::runtime_error("Invalid terminal expression selected");
         }
@@ -299,8 +295,7 @@ private:
         continue_expression_probability_ = dist(random_);
     }
 
-
-    void update_continue_expression_probability() // TODO: сделать по нормальному, когда параметры будут не захардкожены
+    void update_continue_expression_probability()
     {
         if (expression_depth_ >= settings_.max_expression_depth)
         {
@@ -308,9 +303,9 @@ private:
             return;
         }
 
-        auto remaining_depth =
+        auto&& remaining_depth =
             static_cast<double>(settings_.max_expression_depth - expression_depth_);
-        auto total_depth     =
+        auto&& total_depth     =
             static_cast<double>(settings_.max_expression_depth);
 
         continue_expression_probability_=
@@ -384,8 +379,8 @@ private:
             weights.push_back(settings_.statements_weights[id]);
         };
 
-        add_expression_if_its_possible(Statement::PrintStmt);
         add_expression_if_its_possible(Statement::AssignStmt);
+        add_expression_if_its_possible(Statement::PrintStmt);
         add_expression_if_its_possible(Statement::ExpressionStmt);
         add_expression_if_its_possible(Statement::SemicolonStmt);
         add_expression_if_its_possible(Statement::CommentStmt);
@@ -398,11 +393,11 @@ private:
 
         switch (chosen)
         {
+            case Statement::AssignStmt:
+                return generate_statement();
+
             case Statement::PrintStmt:
                 return generate_print();
-
-            case Statement::AssignStmt:
-                return generate_assign();
 
             case Statement::ExpressionStmt:
                 return generate_expression();
@@ -476,6 +471,47 @@ private:
     }
 
 private:
+    void modify_expression_to_guareanted_do_it_not_equal_to_zero(BasicNode& node)
+    {
+        if (node.is_a<last::node::NumberLiteral>())
+        {
+            auto&& number = static_cast<last::node::NumberLiteral const &>(node);
+            if (number.value() == 0) node = last::node::create(last::node::NumberLiteral{1});
+            return;
+        }
+        static unique_name_id_t save_from_zero = 0;
+
+        /*
+            something / expr
+                ->
+            something / ((save_div_tmp_var = expr) == 0 + save_div_tmp_var)
+        */
+
+        auto&& zero    = last::node::create(last::node::NumberLiteral{0});
+        auto&& tmp_var = last::node::create(last::node::Variable{"save_from_zero_" + std::to_string(save_from_zero++)});
+
+        auto&& set_expression_to_variable = last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ASGN,
+            tmp_var,
+            std::move(node)
+        });
+
+        auto&& compare_expression_with_null = last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ISEQ,
+            std::move(set_expression_to_variable),
+            std::move(zero)
+        });
+
+        node = last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ADD,
+            std::move(compare_expression_with_null),
+            std::move(tmp_var)
+        });
+    }
+
     BasicNode generate_while()
     {
         if (statement_depth_ >= settings_.max_scope_depth)
@@ -489,7 +525,7 @@ private:
         if (settings_.guaranteed_to_end_while)
         {
             static unique_name_id_t id = 0;
-            auto&& tmp_var = last::node::create(last::node::Variable{"save_while_tmp_var_" + std::to_string(id++)});
+            auto&& tmp_var = last::node::create(last::node::Variable{"save_from_everlasting_summ__oh_hm_i_mean_while_" + std::to_string(id++)});
             auto&& zero = last::node::create(last::node::NumberLiteral{0});
             auto&& one = last::node::create(last::node::NumberLiteral{1});
             auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
@@ -577,11 +613,13 @@ private:
         // but var was not declared in this statement yet
 
         auto&& value        = generate_expression();
-
-        auto&& kind_dist    = std::uniform_int_distribution<int> (0, 1);
+        auto&& kind_dist    = std::uniform_int_distribution<int> (0, 1 + (not name_generator_.empty()));
         auto&& kind         = kind_dist(random_);
-        auto&& new_variable = (kind == 0);
-        auto&& variable     = (new_variable) ? name_generator_.generate_new_variable () : name_generator_.generate_absolute_new_variable ();
+        auto&& variable     = BasicNode{};
+
+             if (kind == 0) variable = name_generator_.generate_absolute_new_variable();
+        else if (kind == 1) variable = name_generator_.generate_new_variable         ();
+        else                variable = name_generator_.generate_existing_variable    ();
 
         return last::node::create(last::node::BinaryOperator
         {
@@ -593,9 +631,6 @@ private:
 
     BasicNode generate_print()
     {
-        std::uniform_int_distribution<std::size_t> argc_dist(1, 3);
-        auto&& argc = argc_dist(random_);
-
         std::vector<BasicNode> args = {generate_expression()};
 
         return last::node::create(last::node::Print{std::move(args)});
@@ -646,34 +681,72 @@ private:
 
         ++expression_depth_;
 
-        static constexpr std::array<last::node::BinaryOperator::BinaryOperatorT, 14> ops =
+        auto&& must_use_variable = [](last::node::BinaryOperator::BinaryOperatorT id) -> bool
         {
-            last::node::BinaryOperator::ADD,
-            last::node::BinaryOperator::SUB,
-            last::node::BinaryOperator::MUL,
-            last::node::BinaryOperator::DIV,
-            last::node::BinaryOperator::ISEQ,
-            last::node::BinaryOperator::ISNE,
-            last::node::BinaryOperator::ISAB,
-            last::node::BinaryOperator::ISABE,
-            last::node::BinaryOperator::ISLS,
-            last::node::BinaryOperator::ISLSE,
-            last::node::BinaryOperator::ADDASGN,
-            last::node::BinaryOperator::SUBASGN,
-            last::node::BinaryOperator::MULASGN,
-            last::node::BinaryOperator::DIVASGN
+            switch (id)
+            {
+                case last::node::BinaryOperator::ASGN:
+                case last::node::BinaryOperator::ADDASGN:
+                case last::node::BinaryOperator::SUBASGN:
+                case last::node::BinaryOperator::MULASGN:
+                case last::node::BinaryOperator::DIVASGN:
+                case last::node::BinaryOperator::REMASGN: return true;
+                default: break;
+            }
+            return false;
         };
 
-        std::uniform_int_distribution<std::size_t> dist(0, ops.size() - 1);
+
+        auto&& ops = std::vector<last::node::BinaryOperator::BinaryOperatorT>{};
+        auto&& weights = std::vector<weight_t>{};
+
+        auto&& add_binop_if_possible = [&](last::node::BinaryOperator::BinaryOperatorT id) -> void
+        {
+            auto&& weight = settings_.binary_operators_weights[id];
+            if ((weight == 0) or ((settings_.expressions_weights[Expression::VariableExpr] == 0) and must_use_variable(id))) return;
+
+            weights.push_back(weight);
+            ops.push_back(id);
+        };
+
+        add_binop_if_possible(last::node::BinaryOperator::AND);
+        add_binop_if_possible(last::node::BinaryOperator::OR);
+        add_binop_if_possible(last::node::BinaryOperator::ADD);
+        add_binop_if_possible(last::node::BinaryOperator::SUB);
+        add_binop_if_possible(last::node::BinaryOperator::MUL);
+        add_binop_if_possible(last::node::BinaryOperator::DIV);
+        add_binop_if_possible(last::node::BinaryOperator::REM);
+        add_binop_if_possible(last::node::BinaryOperator::ISEQ);
+        add_binop_if_possible(last::node::BinaryOperator::ISNE);
+        add_binop_if_possible(last::node::BinaryOperator::ISAB);
+        add_binop_if_possible(last::node::BinaryOperator::ISABE);
+        add_binop_if_possible(last::node::BinaryOperator::ISLS);
+        add_binop_if_possible(last::node::BinaryOperator::ISLSE);
+        add_binop_if_possible(last::node::BinaryOperator::ADDASGN);
+        add_binop_if_possible(last::node::BinaryOperator::SUBASGN);
+        add_binop_if_possible(last::node::BinaryOperator::MULASGN);
+        add_binop_if_possible(last::node::BinaryOperator::DIVASGN);
+        add_binop_if_possible(last::node::BinaryOperator::REMASGN);
+
+#if not defined(NDEBUG)
+        if (ops.size() == 0) throw std::runtime_error("no binop enabled, but they was requested");
+#endif /* not defined(NDEBUG) */
+
+        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
         auto&& op = ops[dist(random_)];
 
         BasicNode lhs;
         BasicNode rhs;
 
-        if (op == last::node::BinaryOperator::ADDASGN ||
-            op == last::node::BinaryOperator::SUBASGN ||
-            op == last::node::BinaryOperator::MULASGN ||
-            op == last::node::BinaryOperator::DIVASGN)
+        auto&& op_use_variable_always = (
+            op == last::node::BinaryOperator::ADDASGN or
+            op == last::node::BinaryOperator::SUBASGN or
+            op == last::node::BinaryOperator::MULASGN or
+            op == last::node::BinaryOperator::DIVASGN or
+            op == last::node::BinaryOperator::REMASGN
+        );
+    
+        if (op_use_variable_always)
         {
             if (name_generator_.empty())
             {
@@ -701,50 +774,17 @@ private:
                 rhs = generate_terminal_expression();
         }
 
-        if ((op == last::node::BinaryOperator::DIV ||
-            op == last::node::BinaryOperator::DIVASGN) &&
-            settings_.save_div)
-        {
-            if (rhs.is_a<last::node::NumberLiteral>())
-            {
-                auto&& number = static_cast<last::node::NumberLiteral const &>(rhs);
-                if (number.value() == 0)
-                    rhs = last::node::create(last::node::NumberLiteral{1});
-            }
-            else
-            {
-                static unique_name_id_t save_div_tmp_var_id = 0;
-                /*
-                    something / expr
-                        ->
-                    something / ((save_div_tmp_var = expr) == 0 + save_div_tmp_var)
-                */
-
-                auto&& zero    = last::node::create(last::node::NumberLiteral{0});
-                auto&& tmp_var = last::node::create(last::node::Variable{"save_div_tmp_var_" + std::to_string(save_div_tmp_var_id++)});
-
-                auto&& set_expression_to_variable = last::node::create(last::node::BinaryOperator
-                {
-                    last::node::BinaryOperator::ASGN,
-                    tmp_var,
-                    std::move(rhs)
-                });
-
-                auto&& compare_expression_with_null = last::node::create(last::node::BinaryOperator
-                {
-                    last::node::BinaryOperator::ISEQ,
-                    std::move(set_expression_to_variable),
-                    std::move(zero)
-                });
-
-                rhs = last::node::create(last::node::BinaryOperator
-                {
-                    last::node::BinaryOperator::ADD,
-                    std::move(compare_expression_with_null),
-                    std::move(tmp_var)
-                });
-            }
-        }
+        auto&& rhs_cant_be_zero = ((
+            op == last::node::BinaryOperator::DIV or
+            op == last::node::BinaryOperator::DIVASGN
+            ) and settings_.save_div)
+            or (( 
+                op == last::node::BinaryOperator::REM or
+                op == last::node::BinaryOperator::REMASGN
+            ) and settings_.save_rem);
+        
+        if (rhs_cant_be_zero)
+            modify_expression_to_guareanted_do_it_not_equal_to_zero(rhs);
 
         update_continue_expression_probability();
         --expression_depth_;
@@ -763,20 +803,31 @@ private:
 
         ++expression_depth_;
 
-        BasicNode arg;
-        if (will_continue_expression())
-            arg = generate_expression_impl();
-        else
-            arg = generate_terminal_expression();
+        auto&& arg = will_continue_expression() ?
+            generate_expression_impl() :
+            generate_terminal_expression();
 
-        std::array<last::node::UnaryOperator::UnaryOperatorT, 3> ops =
+        auto&& ops = std::vector<last::node::UnaryOperator::UnaryOperatorT>{};
+        auto&& weights = std::vector<weight_t>{};
+
+        auto&& add_unop_if_possible = [&](last::node::UnaryOperator::UnaryOperatorT id)
         {
-            last::node::UnaryOperator::PLUS,
-            last::node::UnaryOperator::MINUS,
-            last::node::UnaryOperator::NOT
+            auto&& weight = settings_.unary_operators_weights[id];
+            if (weight == 0) return;
+
+            ops.push_back(id);
+            weights.push_back(weight);
         };
 
-        std::uniform_int_distribution<std::size_t> dist(0, ops.size() - 1);
+        add_unop_if_possible(last::node::UnaryOperator::PLUS);
+        add_unop_if_possible(last::node::UnaryOperator::MINUS);
+        add_unop_if_possible(last::node::UnaryOperator::NOT);
+
+#if not defined(NDEBUG)
+        if (ops.size() == 0) throw std::runtime_error("no unop enabled, but they was requested");
+#endif /* not defined(NDEBUG) */
+
+        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
         auto&& op = ops[dist(random_)];
 
         update_continue_expression_probability();
