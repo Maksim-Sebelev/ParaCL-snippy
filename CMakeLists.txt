@@ -55,12 +55,13 @@ add_subdirectory(
     ${CMAKE_BINARY_DIR}/subproject/ast
 )
 
-add_subdirectory(${TEST_GENERATOR_SRC_DIR}/tests-generator)
 
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/options)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/settings)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/builder)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/serializer)
+
+add_subdirectory(${TEST_GENERATOR_SRC_DIR}/tests-generator)
 
 # =================================================================================================
 

@@ -63,7 +63,7 @@ function generate_test
         exit 1
     fi
 
-    test_name="$test_name.cl"
+    test_name="snippy-automatic-generated-test::$test_name.cl"
 
     if [ "$settings" == "" ]; then
         "$snippy" -o "$output_directory"/"$test_name"
@@ -98,6 +98,13 @@ function show_success_rate
     else
         echo "Test generation failure (ignore it, continue tests generating)."
     fi
+}
+
+function update_n
+{
+    local ntest="$1";
+
+
 }
 
 # with default settings

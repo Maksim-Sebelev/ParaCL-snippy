@@ -422,7 +422,7 @@ void serialize(last::AST const & ast, test_generator::Options const & options)
         auto&& ifs = std::ifstream{options.settings_file};
         if (ifs.fail()) throw std::runtime_error("No such file: '" + options.settings_file.string() + "'");
 
-        ofs << "\n// generating settings (" << options.settings_file << "):\n/*\n";
+        ofs << "\n// generating settings: " << options.settings_file << ":\n/*\n";
         ofs << ifs.rdbuf();
         ofs << "*/\n\n";
     }
