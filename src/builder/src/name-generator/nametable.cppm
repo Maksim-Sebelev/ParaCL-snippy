@@ -99,6 +99,7 @@ void Nametable::leave_scope()
     }
 
     unique_name_id_ -= counter;
+
     scopes_.pop_back();
 }
 
@@ -135,7 +136,7 @@ void Nametable::declare(unique_name_id_t id)
     LOGINFO("paracl: interpreter: nametable: declate {} = \"{}\"", id);
 
     if (scopes_.empty())
-        throw std::runtime_error("cannot declare variable: no active scopes");
+       throw std::runtime_error("cannot declare variable (" + std::to_string(id) + "): no active scopes");
 
     if (exists(id))
         throw std::runtime_error("Redeclarion of '" + std::to_string(id) + "'");

@@ -46,10 +46,16 @@ set(TEST_GENERATOR_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
 # =================================================================================================
 
+set(PARACL_SNIPPY paracl-snippy)
+
+# =================================================================================================
+
 add_subdirectory(
     ${TEST_GENERATOR_SRC_DIR}/AST
     ${CMAKE_BINARY_DIR}/subproject/ast
 )
+
+add_subdirectory(${TEST_GENERATOR_SRC_DIR}/tests-generator)
 
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/options)
 add_subdirectory(${TEST_GENERATOR_SRC_DIR}/settings)
@@ -58,23 +64,22 @@ add_subdirectory(${TEST_GENERATOR_SRC_DIR}/serializer)
 
 # =================================================================================================
 
-set(TEST_GENERATOR_EXE paracl-snippy)
 
-add_executable(${TEST_GENERATOR_EXE})
+add_executable(${PARACL_SNIPPY})
 
-target_sources(${TEST_GENERATOR_EXE}
+target_sources(${PARACL_SNIPPY}
 PRIVATE
-    ${TEST_GENERATOR_SRC_DIR}/main.cpp
+  ${TEST_GENERATOR_SRC_DIR}/main.cpp
 )
 
-target_link_libraries(${TEST_GENERATOR_EXE}
+target_link_libraries(${PARACL_SNIPPY}
 PRIVATE
-    test-generator-options
-    test-generator-options-reader
-    test-generator-settings
-    test-generator-settings-reader
-    ast-random-builder
-    ast-serializer
+  test-generator-options
+  test-generator-options-reader
+  test-generator-settings
+  test-generator-settings-reader
+  ast-random-builder
+  ast-serializer
 )
 
 # =================================================================================================

@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# Automatic generated with "@CMAKE_CURRENT_LIST_FILE@"
+
+snippy="@PARACL_SNIPPY@"
+
+build_directory="@CMAKE_BINARY_DIR@"
+
+if [ -f "$build_directory/$snippy" ]; then
+    snippy="$build_directory/$snippy"
+else
+    snippy=$(which "$snippy")
+    if [ $? -ne 0 ]; then
+        echo "Failed to find ParaCL-snippy at your device"
+        exit 1
+    fi
+fi
+
+
+if [ $# -eq 0 ]; then
+    output_directory="paracl-snippy-generated-tests"
+elif [ $# -eq 1 ]; then
+    if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+        echo "Usage: $0 [output directory]"
+        exit 0
+    fi
+    output_directory="$1"
+else
+    echo "Usage: $0 [output directory]"
+    exit 1
+fi
+
+mkdir -p "$output_directory"
+
+settings_directory="@PARACL_SNIPPY_BASIC_SETTINGS@"
+
+if ! [ -d "$settings_directory" ]; then
+    echo "No such directory: $settings_directory"
+    echo "Failed find directory with settings, will generate only tests with default settings."
+    settings=""
+fi
+
+function generate_test
+{
+    local settings="$1"
+    local ntest="$2"
+
+    if ! [[ "$ntest" =~ ^[0-9]+$ ]] || [ "$ntest" -lt 0 ]; then
+        echo "bad test name. it's must be number from 1 to 9999"
+        exit 1
+    fi
+
+    if [ $ntest -lt 10 ]; then
+        test_name="000$ntest"
+    elif [ $ntest -lt 100 ]; then
+        test_name="00$ntest"
+    elif [ $ntest -lt 1000 ]; then
+        test_name="0$ntest"
+    elif [ $ntest -lt 10000 ]; then
+        test_name="$ntest"
+    else
+        echo "too big test number. I can parse only if it\`s less then 10000 (10^4)"
+        exit 1
+    fi
+
+    test_name="$test_name.cl"
+
+    if [ "$settings" == "" ]; then
+        "$snippy" -o "$output_directory"/"$test_name"
+    else
+        "$snippy" -s "$settings" -o "$output_directory"/"$test_name"
+    fi
+}
+
+n_iteration_by_setting=10
+
+tests_all=1 # default settings
+
+for _ in "$settings_directory"/*.json; do
+    tests_all=$((tests_all+1))
+done
+tests_all=$((n_iteration_by_setting*tests_all))
+
+ntest=1
+
+
+function show_progress
+{
+    echo -n "[$ntest/$tests_all] "
+}
+
+function show_success_rate
+{
+    local snippy_exit_code="$1"
+    local output="$2"
+    if [ "$snippy_exit_code" -eq 0 ]; then
+        echo "- done"
+    else
+        echo "Test generation failure (ignore it, continue tests generating)."
+    fi
+}
+
+# with default settings
+for _ in $(seq 1 "${n_iteration_by_setting}"); do
+    show_progress
+    generate_test "$settings" "$ntest"
+    show_success_rate "$?" "$output"
+
+    ntest=$((ntest+1))
+done
+
+# with custom settings
+if [ "$settings_directory" != "" ]; then
+    for settings in "$settings_directory"/*.json; do
+        for _ in $(seq 1 "${n_iteration_by_setting}"); do
+            show_progress
+            generate_test "$settings" "$ntest"
+            show_success_rate "$?" "$output"
+            ntest=$(((ntest+1)))
+        done
+    done
+fi
+
+echo
+echo "Tests generation completed"

@@ -335,13 +335,29 @@ private:
     }
 
 private:
+
     BasicNode generate_scope()
     {
         if (statement_depth_ >= settings_.max_scope_depth)
             return generate_not_scoped_statement();
 
-        name_generator_.new_scope();
         ++statement_depth_;
+
+        auto&& scope = generate_scope_impl();
+
+        --statement_depth_;
+
+        return scope;
+    }
+
+    BasicNode generate_global_scope()
+    {
+        return generate_scope_impl();
+    }
+
+    BasicNode generate_scope_impl()
+    {
+        name_generator_.new_scope();
 
         auto&& statements = std::vector<BasicNode>{};
         do
@@ -351,7 +367,6 @@ private:
         while (will_generate_new_statement());
 
         name_generator_.leave_scope();
-        --statement_depth_;
 
         return last::node::create(last::node::Scope{std::move(statements)});
     }
@@ -787,7 +802,7 @@ public:
 public:
     last::AST generate_random_ast()
     {
-        auto&& root = generate_scope();
+        auto&& root = generate_global_scope();
         return last::AST(std::move(root));
     }
 };
