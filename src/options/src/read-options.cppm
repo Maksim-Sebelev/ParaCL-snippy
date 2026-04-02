@@ -56,7 +56,7 @@ R"~(
         "Version: " << PARACL_SNIPPY_VERSION <<
 #endif /* defined (PARACL_SNIPPY_VERSION) */
 R"~(
-This is the open-source proejct by MIPT students for MIPT students.
+This is the open-source project by MIPT students for MIPT students.
 You can use it free without any restrictions,
 to test your ParaCL compiler or interpreter for MIPT bachelor C++ course
 from Konstantin Vladimirov (https://github.com/tilir)
