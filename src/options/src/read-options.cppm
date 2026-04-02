@@ -26,6 +26,7 @@ Supported options)"
 
     desc.add_options()
         ("help,h", "produce this message")
+        ("version,v", "show version of project")
         ("output,o", boost::program_options::value<std::string>(), "output file with generated program")
         ("settings,s", boost::program_options::value<std::string>(), "settings in json format.\nTo read about this format go in README.md");
     
@@ -39,6 +40,23 @@ Supported options)"
         std::exit(EXIT_SUCCESS);
     }
     
+    if (vm.count("version"))
+    {
+        std::cout << "ParaCL-snippy " <<
+        
+#if defined(PARACL_SNIPPY_VERSION)
+        PARACL_SNIPPY_VERSION <<
+#endif /* defined (PARACL_SNIPPY_VERSION) */
+
+R"~(
+This is the open-source proejct by MIPT students for MIPT students.
+You can use it free without any restrictions,
+to test your ParaCL compiler or interpreter for MIPT bachelor C++ course
+from Konstantin Vladimirov (https://github.com/tilir)
+)~";
+        std::exit(EXIT_SUCCESS);
+    }
+
     auto&& options = Options{};
 
     if (vm.count("output"))

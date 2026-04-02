@@ -71,4 +71,9 @@ PRIVATE
     Boost::program_options
 )
 
+target_compile_definitions(${PARACL_SNIPPY_OPTIONS_READER_LIB}
+PRIVATE
+    -DPARACL_SNIPPY_VERSION="${PARACL_SNIPPY_VERSION}"
+)
+
 # =================================================================================================
