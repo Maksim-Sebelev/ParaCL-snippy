@@ -1,8 +1,9 @@
 {
     "statements-weights": {
-        "while"      : 1,
-        "expression" : 1,
-        "if"         : 1,
+        "while"      : 0,
+        "assign"     : 0,
+        "expression" : 0,
+        "if"         : 0,
         "print"      : 1,
         "scope"      : 0,
         "comment"    : 0,
@@ -10,12 +11,12 @@
     },
     "expressions-weights": {
         "binop-weights": {
-            "and"    : 1,
-            "or"     : 1,
+            "and"    : 0,
+            "or"     : 0,
             "add"    : 0,
             "sub"    : 0,
             "mul"    : 0,
-            "div"    : 0,
+            "div"    : 1,
             "rem"    : 0,
             "asgn"   : 0,
             "addasgn": 0,
@@ -32,19 +33,19 @@
         },
         "unop-weights": {
             "minus": 0,
-            "plus" : 1,
+            "plus" : 0,
             "not"  : 0
         },
-        "binop"   : 1,
+        "binop"   : 2,
         "unop"    : 0,
         "print"   : 0,
-        "in"      : 0,
-        "variable": 1,
-        "number"  : 9
+        "in"      : 1,
+        "variable": 0,
+        "number"  : 1
     },
     "next-stmt-p"           : 0.8,
-    "continue-expr-max-p"   : 0.6,
-    "max-expression-depth"  : 3,
+    "continue-expr-max-p"   : 1,
+    "max-expression-depth"  : 1,
     "max-scope-depth"       : 4,
     "save-div"              : true,
     "save-rem"              : true,

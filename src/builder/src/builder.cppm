@@ -214,7 +214,7 @@ private:
 
         auto&& add_expression_if_its_possible = [&](Expression id) -> void
         {
-            if (settings_.expressions_weights[id] == 0) return;
+            if (not enabled(id)) return;
             if ((id == Expression::VariableExpr) and name_generator_.empty()) return;
 
             expressions.push_back(id);
@@ -255,7 +255,7 @@ private:
 
         auto&& add_expression_if_its_possible = [&](Expression id) -> void
         {
-            if (settings_.expressions_weights[id] == 0) return;
+            if (not enabled(id)) return;
 
             expressions.push_back(id);
             weights.push_back(settings_.expressions_weights[id]);
@@ -329,6 +329,195 @@ private:
         return dist(random_);
     }
 
+    bool enabled(Statement id) const
+    {
+        assert(id < Statement::STATEMENTS_SIZE);
+        return settings_.statements_weights[id] != 0;
+    }
+
+
+    bool enabled(Expression id) const
+    {
+        assert(id < Expression::EXPRESSIONS_SIZE);
+        return settings_.expressions_weights[id] != 0;
+    }
+
+    bool enabled(last::node::BinaryOperator::BinaryOperatorT id) const
+    {
+        assert(id < last::node::BinaryOperator::BINOPS_SIZE);
+        return settings_.binary_operators_weights[id] != 0;
+    }
+
+
+    bool enabled(last::node::UnaryOperator::UnaryOperatorT id) const
+    {
+        assert(id < last::node::UnaryOperator::UNOPS_SIZE);
+        return settings_.unary_operators_weights[id] != 0;
+    }
+
+
+    struct NotConstantExpression
+    {};
+
+    int calc_constant_expression(last::node::BinaryOperator const & node)
+    {
+        auto&& type = node.type();
+
+        auto&& right = calc_constant_expression(node.rarg());
+    
+        if (node.larg().is_a<last::node::Variable>() and type == last::node::BinaryOperator::ASGN)
+            return right;
+
+        auto&& left = calc_constant_expression(node.larg());
+
+        switch (node.type())
+        {
+            case last::node::BinaryOperator::AND  : return left && right;
+            case last::node::BinaryOperator::OR   : return left || right;
+            case last::node::BinaryOperator::ADD  : return left +  right;
+            case last::node::BinaryOperator::SUB  : return left -  right;
+            case last::node::BinaryOperator::MUL  : return left *  right;
+            case last::node::BinaryOperator::ISEQ : return left == right;
+            case last::node::BinaryOperator::ISNE : return left != right;
+            case last::node::BinaryOperator::ISAB : return left >  right;
+            case last::node::BinaryOperator::ISABE: return left >= right;
+            case last::node::BinaryOperator::ISLS : return left <  right;
+            case last::node::BinaryOperator::ISLSE: return left <= right;
+            case last::node::BinaryOperator::DIV  : assert(right != 0); return left / right; // expected that right != 0, cause we must already modified it
+            case last::node::BinaryOperator::REM  : assert(right != 0); return left % right; // expected that right != 0, cause we must already modified it
+
+            default: break;
+        }
+
+        // assert(right != 0);
+        // auto&& rarg_copy = BasicNode{node.rarg()};
+
+        // modify_expression_to_guareanted_do_it_not_equal_to_zero(rarg_copy);
+
+        // right = calc_constant_expression(rarg_copy); assert(right != 0);
+
+        // switch (node.type())
+        // {
+        //     case last::node::BinaryOperator::DIV: return left / right;
+        //     case last::node::BinaryOperator::REM: return left % right;
+        //     default: break;
+        // }
+
+        throw NotConstantExpression{};
+    }
+
+    int calc_constant_expression(last::node::UnaryOperator const & node)
+    {
+        auto&& arg = calc_constant_expression(node.arg());
+        switch (node.type())
+        {
+            case last::node::UnaryOperator::PLUS : return +arg;
+            case last::node::UnaryOperator::MINUS: return -arg;
+            case last::node::UnaryOperator::NOT  : return !arg;
+            default: break;
+        }
+
+#if defined(NDEBUG)
+        __builtin_unreachable();
+#else /* defined(NDEBUG) */
+        throw std::runtime_error("udnefined unary operator in " + std::string(__PRETTY_FUNCTION__));
+#endif /* defined(NDEBUG) */
+    }
+
+    int calc_constant_expression(BasicNode const & node)
+    {
+        if (node.is_a<last::node::BinaryOperator>())
+            return calc_constant_expression(static_cast<last::node::BinaryOperator>(node));
+        if (node.is_a<last::node::UnaryOperator>())
+            return calc_constant_expression(static_cast<last::node::UnaryOperator>(node));
+        if (node.is_a<last::node::NumberLiteral>())
+            return static_cast<last::node::NumberLiteral>(node).value();
+
+        throw NotConstantExpression{};
+    }
+
+
+    void modify_if_variables_enabled(BasicNode& node)
+    {
+        /*
+            expr
+                ->
+            ((save_from_zero = expr) == 0 + save_from_zero) (*)
+
+            if expr equal to 0, (*) will be 1, else (*) is equal to expr
+        */
+
+        static unique_name_id_t save_from_zero = 0;
+
+        auto&& zero    = last::node::create(last::node::NumberLiteral{0});
+        auto&& tmp_var = last::node::create(last::node::Variable{"save_from_zero_" + std::to_string(save_from_zero++)});
+
+        auto&& set_expression_to_variable = last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ASGN,
+            tmp_var,
+            std::move(node)
+        });
+
+        auto&& compare_expression_with_null = last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ISEQ,
+            std::move(set_expression_to_variable),
+            std::move(zero)
+        });
+
+        node = last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ADD,
+            std::move(compare_expression_with_null),
+            std::move(tmp_var)
+        });
+    }
+
+    void modify_if_variables_not_enabled_and_value_is_zero(BasicNode& node)
+    {
+        // this situation is very rare, so we can ignore random generating here :)
+
+        // numbers or ? must be enabled, settings class guaranted it
+
+        if (enabled(Expression::NumberLiteralExpr))
+            node = last::node::create(last::node::NumberLiteral{1});
+        else
+            node = last::node::create(last::node::Scan{});
+    }
+
+    void modify_expression_to_guareanted_do_it_not_equal_to_zero(BasicNode& node)
+    {
+        if (node.is_a<last::node::NumberLiteral>())
+        {
+            auto&& number = static_cast<last::node::NumberLiteral const &>(node);
+            if (number.value() == 0) node = last::node::create(last::node::NumberLiteral{1});
+            return;
+        }
+
+        if (node.is_a<last::node::Scan>())
+            return;
+
+        // if expression is not a constant,
+        // calc_constant_expression will throw exception
+
+        try {
+        auto&& value = calc_constant_expression(node);
+        if (value != 0) return;
+        }
+        catch(NotConstantExpression) { /* skip */}
+
+        if (enabled(Expression::VariableExpr        ) and
+            enabled(Expression::NumberLiteralExpr   ) and
+            enabled(Expression::BinaryOperatorExpr  ) and
+            enabled(last::node::BinaryOperator::ASGN) and
+            enabled(last::node::BinaryOperator::ISEQ) and
+            enabled(last::node::BinaryOperator::ADD)
+        ) return modify_if_variables_enabled(node);
+
+        return modify_if_variables_not_enabled_and_value_is_zero(node);
+    }
+
 private:
 
     BasicNode generate_scope()
@@ -373,7 +562,7 @@ private:
 
         auto&& add_expression_if_its_possible = [&](Statement id) -> void
         {
-            if (settings_.statements_weights[id] == 0) return;
+            if (not enabled(id)) return;
 
             statements.push_back(id);
             weights.push_back(settings_.statements_weights[id]);
@@ -471,47 +660,6 @@ private:
     }
 
 private:
-    void modify_expression_to_guareanted_do_it_not_equal_to_zero(BasicNode& node)
-    {
-        if (node.is_a<last::node::NumberLiteral>())
-        {
-            auto&& number = static_cast<last::node::NumberLiteral const &>(node);
-            if (number.value() == 0) node = last::node::create(last::node::NumberLiteral{1});
-            return;
-        }
-        static unique_name_id_t save_from_zero = 0;
-
-        /*
-            something / expr
-                ->
-            something / ((save_div_tmp_var = expr) == 0 + save_div_tmp_var)
-        */
-
-        auto&& zero    = last::node::create(last::node::NumberLiteral{0});
-        auto&& tmp_var = last::node::create(last::node::Variable{"save_from_zero_" + std::to_string(save_from_zero++)});
-
-        auto&& set_expression_to_variable = last::node::create(last::node::BinaryOperator
-        {
-            last::node::BinaryOperator::ASGN,
-            tmp_var,
-            std::move(node)
-        });
-
-        auto&& compare_expression_with_null = last::node::create(last::node::BinaryOperator
-        {
-            last::node::BinaryOperator::ISEQ,
-            std::move(set_expression_to_variable),
-            std::move(zero)
-        });
-
-        node = last::node::create(last::node::BinaryOperator
-        {
-            last::node::BinaryOperator::ADD,
-            std::move(compare_expression_with_null),
-            std::move(tmp_var)
-        });
-    }
-
     BasicNode generate_while()
     {
         if (statement_depth_ >= settings_.max_scope_depth)
@@ -703,7 +851,7 @@ private:
         auto&& add_binop_if_possible = [&](last::node::BinaryOperator::BinaryOperatorT id) -> void
         {
             auto&& weight = settings_.binary_operators_weights[id];
-            if ((weight == 0) or ((settings_.expressions_weights[Expression::VariableExpr] == 0) and must_use_variable(id))) return;
+            if ((weight == 0) or ((not enabled(Expression::VariableExpr)) and must_use_variable(id))) return;
 
             weights.push_back(weight);
             ops.push_back(id);
