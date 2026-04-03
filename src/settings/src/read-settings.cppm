@@ -250,6 +250,28 @@ void read_max_statement_depth(boost::json::value const & jv, SnippySettings& set
     throw std::runtime_error("Field '" + std::string(key) + "' must non negative integer.");
 }
 
+
+void read_statements_limit(boost::json::value const & jv, SnippySettings& settings)
+{
+    auto&& root_obj = jv.as_object();
+
+    auto&& key = "statements-limit";
+    if (not root_obj.contains(key)) return;
+
+    auto&& json_val = root_obj.at(key);
+
+    if (json_val.is_int64())
+    {
+        auto&& value = json_val.as_int64();
+        if (value >= 0)
+        {
+            settings.statements_limit = static_cast<size_t>(value);
+            return;
+        }
+    }
+    throw std::runtime_error("Field '" + std::string(key) + "' must be non negative integer.");
+}
+
 void read_max_expression_depth(boost::json::value const & jv, SnippySettings& settings)
 {
     auto&& root_obj = jv.as_object();
@@ -364,6 +386,7 @@ SnippySettings read_settings_(std::string_view json_data)
     read_save_rem(jv, settings);
     read_save_while(jv, settings);
     read_while_iterations_limit(jv, settings);
+    read_statements_limit(jv, settings);
 
     return settings;
 }

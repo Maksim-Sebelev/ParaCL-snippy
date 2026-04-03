@@ -54,10 +54,11 @@ private:
     probability_t generate_next_statement_probability_;
     probability_t continue_expression_probability_;
 
-    std::size_t statement_depth_  = 0LU;
+    std::size_t scope_depth_  = 0LU;
     std::size_t expression_depth_ = 0LU;
+    std::size_t statements_counter_ = 0LU;
 
-    bool делаем_пасхалку_;
+    bool делаем_пасхалку_ : 1;
     std::vector<std::string_view> пасхалка_
     {
         "Ослепший старый маг",
@@ -273,19 +274,16 @@ private:
 
         switch (chosen)
         {
-            case Expression::BinaryOperatorExpr:
-                return generate_binary_operator();
-
-            case Expression::UnaryOperatorExpr:
-                return generate_unary_operator();
-
-            case Expression::PrintExpr:
-                return generate_print();
-
-            default:
-                throw std::runtime_error("Invalid terminal expression selected");
+            case Expression::BinaryOperatorExpr: return generate_binary_operator();
+            case Expression::UnaryOperatorExpr : return generate_unary_operator ();
+            case Expression::PrintExpr         : return generate_print          ();
+            default: break;
         }
-        return BasicNode{};
+#if defined(NDEBUG)
+        __builtin_unreachable();
+#else /* defined(NDEBUG) */
+        throw std::runtime_error("udnefined unary operator in " + std::string(__PRETTY_FUNCTION__));
+#endif /* defined(NDEBUG) */
     }
 
     void reset_continue_expression_probability()
@@ -297,7 +295,7 @@ private:
 
     void update_continue_expression_probability()
     {
-        if (expression_depth_ >= settings_.max_expression_depth)
+        if (too_deep_expression())
         {
             continue_expression_probability_ = 0.0;
             return;
@@ -355,6 +353,20 @@ private:
         return settings_.unary_operators_weights[id] != 0;
     }
 
+    bool too_deep_scope() const
+    {
+        return scope_depth_ >= settings_.max_scope_depth;
+    }
+
+    bool too_deep_expression() const
+    {
+        return expression_depth_ >= settings_.max_expression_depth;
+    }
+
+    bool too_many_statements() const
+    {
+        return statements_counter_ >= settings_.statements_limit;
+    }
 
     struct NotConstantExpression
     {};
@@ -522,14 +534,14 @@ private:
 
     BasicNode generate_scope()
     {
-        if (statement_depth_ >= settings_.max_scope_depth)
+        if (too_deep_scope())
             return generate_not_scoped_statement();
 
-        ++statement_depth_;
-
+        ++scope_depth_;
+    
         auto&& scope = generate_scope_impl();
 
-        --statement_depth_;
+        --scope_depth_;
 
         return scope;
     }
@@ -544,11 +556,12 @@ private:
         name_generator_.new_scope();
 
         auto&& statements = std::vector<BasicNode>{};
-        do
+        while ((will_generate_new_statement()) and (not too_many_statements()))
         {
+            // auto&& statement = generate_statement();
+            // statements.push_back(std::move(statement));
             statements.push_back(generate_statement());
         }
-        while (will_generate_new_statement());
 
         name_generator_.leave_scope();
 
@@ -583,7 +596,7 @@ private:
         switch (chosen)
         {
             case Statement::AssignStmt:
-                return generate_statement();
+                return generate_assign();
 
             case Statement::PrintStmt:
                 return generate_print();
@@ -597,14 +610,19 @@ private:
             case Statement::CommentStmt:
                 return generate_comment();
 
-            default:
-                throw std::runtime_error("Invalid terminal expression selected");
+            default: break;
         }
+#if defined(NDEBUG)
         __builtin_unreachable();
+#else /* defined(NDEBUG) */
+            throw std::runtime_error("Invalid terminal expression selected");
+#endif /* defined(NDEBUG) */
     }
 
     BasicNode generate_statement()
     {
+        ++statements_counter_;
+
         auto&& weights = settings_.statements_weights;
 
         std::discrete_distribution<std::size_t> dist(
@@ -662,7 +680,7 @@ private:
 private:
     BasicNode generate_while()
     {
-        if (statement_depth_ >= settings_.max_scope_depth)
+        if (too_deep_scope())
             return generate_not_scoped_statement();
 
         // needs generate body after generation of tmp var,
@@ -672,11 +690,11 @@ private:
 
         if (settings_.guaranteed_to_end_while)
         {
+            ++statements_counter_; // for tmp variable declaration
+
             static unique_name_id_t id = 0;
             auto&& tmp_var = last::node::create(last::node::Variable{"save_from_everlasting_summ__oh_hm_i_mean_while_" + std::to_string(id++)});
             auto&& zero = last::node::create(last::node::NumberLiteral{0});
-            auto&& one = last::node::create(last::node::NumberLiteral{1});
-            auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
             auto&& tmp_var_init = last::node::create(last::node::BinaryOperator
                 {
                     last::node::BinaryOperator::ASGN,
@@ -684,6 +702,12 @@ private:
                     std::move(zero)
                 }
             );
+
+            if (too_many_statements())
+                return tmp_var_init; // here while is 2, not 1 statement. so we dont want to violate statements limit.
+
+            auto&& one = last::node::create(last::node::NumberLiteral{1});
+            auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
 
             auto&& tmp_var_inc = last::node::create(last::node::BinaryOperator
                 {
@@ -737,7 +761,7 @@ private:
 
     BasicNode generate_if()
     {
-        if (statement_depth_ >= settings_.max_scope_depth)
+        if (too_deep_scope())
             return generate_not_scoped_statement();
 
         auto&& condition = generate_expression();
@@ -808,7 +832,7 @@ private:
 
     BasicNode generate_expression_impl()
     {
-        auto&& cut_off_expression = (not will_continue_expression()) or (expression_depth_ >= settings_.max_expression_depth);
+        auto&& cut_off_expression = (not will_continue_expression()) or (too_deep_expression());
 
         if (cut_off_expression)
             return generate_terminal_expression();
@@ -824,7 +848,7 @@ private:
 
     BasicNode generate_binary_operator()
     {
-        if (expression_depth_ >= settings_.max_expression_depth)
+        if (too_deep_expression())
             return generate_terminal_expression();
 
         ++expression_depth_;
@@ -946,7 +970,7 @@ private:
 
     BasicNode generate_unary_operator()
     {
-        if (expression_depth_ >= settings_.max_expression_depth)
+        if (too_deep_expression())
             return generate_terminal_expression();
 
         ++expression_depth_;

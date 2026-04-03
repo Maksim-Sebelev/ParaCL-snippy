@@ -43,7 +43,7 @@
         "variable": 2,
         "number"  : 1
     },
-    "next-stmt-p"           : 0.8,
+    "next-stmt-p"           : 0.9,
     "continue-expr-max-p"   : 0,
     "max-expression-depth"  : 10,
     "max-scope-depth"       : 5,

@@ -62,6 +62,7 @@ public:
     std::array<weight_t, BinaryOperator::BINOPS_SIZE>  binary_operators_weights;
     std::array<weight_t, UnaryOperator :: UNOPS_SIZE>  unary_operators_weights;
 
+    size_t statements_limit = 1000;
     size_t max_scope_depth = 4;
     size_t max_expression_depth = 10;
 
@@ -73,7 +74,7 @@ public:
 
     constexpr SnippySettings()
     {
-        size_t counter = 0LU;
+        auto&& counter = 0LU;
         // statements weights
         statements_weights[Statement::ExpressionStmt         ] = 1; ++counter;
         statements_weights[Statement::WhileStmt              ] = 1; ++counter;
@@ -129,7 +130,6 @@ public:
 
         if (counter != UnaryOperator::UNOPS_SIZE) throw std::runtime_error("Not all unary operators was default initialized");
         counter = 0LU;
-
     }
 
 private:

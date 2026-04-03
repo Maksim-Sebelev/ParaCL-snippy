@@ -17,7 +17,7 @@
         "variable": 1,
         "number": 1
     },
-    "next-stmt-p": 0.8,
+    "next-stmt-p": 0.9,
     "continue-expr-max-p": 0.6,
     "max-expression-depth": 3,
     "max-scope-depth": 4,
