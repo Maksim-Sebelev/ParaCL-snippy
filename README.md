@@ -1,18 +1,18 @@
 # ParaCl-snippy
-В данном проетке реализован тестовый генеатор для языка `ParaCL`.
+`ParaCl-snippy` - это тестовый генеатор для языка `ParaCL`.
 
 ## Зависимости
-- Clang или GCC с поддержкой C++ 20n (Clang 18+ - гарантированно подойдет)
+- ОС: Ubuntu 24.04.3 LTS (Возможна корректная работа и на других ОС, но это не гарантируется)
+- Clang поддержкой C++20
 - Ninja 1.11.1+
 - CMake 3.28+
-- установленный Boost 1.7+
-
+- Boost 1.7+
 
 ## Установка
 ```
-git clone https://github.com/Maksim-Sebelev/ParaCL-snippy
-cd ParaCL-snippy
-cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release
+git clone https://github.com/Maksim-Sebelev/ParaCL-snippy &&
+cd ParaCL-snippy &&
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release &&
 cmake --build build
 ```
 
@@ -21,9 +21,9 @@ cmake --build build
 Исполняемый файл: `./build/paracl-snippy`
 
 Поддерживаемые опции:\
-  -h [ --help ]          показать информацию о paracl-snippy\
-  -o [ --output ] arg    файл в котором будет сгенерированна программа\
-  -s [ --settings ] arg  json файл с настройками генерации
+  -h [ --help ]            показать информацию о paracl-snippy\
+  -o [ --output ]   arg    файл в котором будет сгенерированна программа\
+  -s [ --settings ] arg    json файл с настройками генерации
 
 Для генерации набора тестов используйте bash-скрипт `generate-basic-tests`.\
 Как аргумент он принимает директорию в которую будут сохранены сгенерированные тесты
