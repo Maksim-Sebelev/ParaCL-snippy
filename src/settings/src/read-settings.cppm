@@ -182,7 +182,6 @@ void read_generate_next_statement_probability(boost::json::value const & jv, Sni
             settings.generate_next_statement_probability = static_cast<probability_t>(value);
             return;
         }
-        throw std::runtime_error("Field '" + std::string(key) + "' must be a floating point number between 0 and 1.");
     }
 
     if (next_stmt_p_val.is_int64())
@@ -214,7 +213,6 @@ void read_continue_expression_max_probability(boost::json::value const & jv, Sni
             settings.continue_expression_max_probability = static_cast<probability_t>(value);
             return;
         }
-        throw std::runtime_error("Field '" + std::string(key) + "' must be a floating point number between 0 and 1.");
     }
 
     if (next_stmt_p_val.is_int64())
@@ -364,7 +362,6 @@ void read_while_iterations_limit(boost::json::value const & jv, SnippySettings& 
             settings.while_iterations_limit = static_cast<size_t>(value);
             return;
         }
-        return;
     }
     throw std::runtime_error("Field '" + std::string(key) + "' must be bool.");
 }

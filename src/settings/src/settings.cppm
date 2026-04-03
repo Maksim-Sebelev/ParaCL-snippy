@@ -60,27 +60,25 @@ public:
     probability_t generate_next_statement_probability = 0.8;
     probability_t continue_expression_max_probability = 0.6;
 
-    std::array<weight_t, Statement ::STATEMENTS_SIZE>  statements_weights;
+    std::array<weight_t, Statement :: STATEMENTS_SIZE> statements_weights;
     std::array<weight_t, Expression::EXPRESSIONS_SIZE> expressions_weights;
-    std::array<weight_t, BinaryOperator::BINOPS_SIZE>  binary_operators_weights;
-    std::array<weight_t, UnaryOperator :: UNOPS_SIZE>  unary_operators_weights;
+    std::array<weight_t, BinaryOperator:: BINOPS_SIZE> binary_operators_weights;
+    std::array<weight_t, UnaryOperator ::  UNOPS_SIZE> unary_operators_weights;
 
-
-    size_t statements_limit = 1000;
-
-    std::size_t max_scope_depth      = 4;
-    std::size_t max_expression_depth = 10;
-    std::size_t max_function_depth_  = 2;
+    std::size_t statements_limit       = 1000;
+    std::size_t max_scope_depth        = 4;
+    std::size_t max_expression_depth   = 10;
+    std::size_t max_function_depth     = 2;
+    std::size_t while_iterations_limit = 30;
 
     bool save_div                : 1 = true;
     bool save_rem                : 1 = true;
     bool guaranteed_to_end_while : 1 = true;
 
-    size_t while_iterations_limit = 30;
-
     constexpr SnippySettings()
     {
         auto&& counter = 0LU;
+
         // statements weights
         statements_weights[Statement::ExpressionStmt         ] = 1; ++counter;
         statements_weights[Statement::WhileStmt              ] = 1; ++counter;
@@ -166,8 +164,8 @@ private:
             break;
         }
 
-        if (!has_expression_weight)
-            throw std::runtime_error("All expression weights are zero. Incorrect generator configuration.");
+        if (has_expression_weight) return;
+        throw std::runtime_error("All expression weights are zero. Incorrect generator configuration.");
 
     }
 
@@ -237,11 +235,11 @@ private:
 public:
     void check_configuration() const
     {
-        check_statements_weight();
-        check_terminal_statements();
-        check_expressions_weight();
-        check_binop_weight();
-        check_unop_weight();
+        check_statements_weight   ();
+        check_terminal_statements ();
+        check_expressions_weight  ();
+        check_binop_weight        ();
+        check_unop_weight         ();
         check_terminal_expressions();
     }
 };
