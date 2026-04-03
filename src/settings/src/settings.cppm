@@ -30,6 +30,7 @@ enum /* NOT class */ Statement : size_t
     ScopeStmt,
     SemicolonStmt,
     CommentStmt,
+    ReturnStmt,
     STATEMENTS_SIZE
 };
 
@@ -42,6 +43,8 @@ enum /* NOT class */ Expression : size_t
     NumberLiteralExpr,
     InExpr,
     PrintExpr,
+    FunctionDeclarationExpr,
+    FunctionCallExpr,
     EXPRESSIONS_SIZE
 };
 
@@ -62,9 +65,12 @@ public:
     std::array<weight_t, BinaryOperator::BINOPS_SIZE>  binary_operators_weights;
     std::array<weight_t, UnaryOperator :: UNOPS_SIZE>  unary_operators_weights;
 
+
     size_t statements_limit = 1000;
-    size_t max_scope_depth = 4;
-    size_t max_expression_depth = 10;
+
+    std::size_t max_scope_depth      = 4;
+    std::size_t max_expression_depth = 10;
+    std::size_t max_function_depth_  = 2;
 
     bool save_div                : 1 = true;
     bool save_rem                : 1 = true;
@@ -84,18 +90,21 @@ public:
         statements_weights[Statement::ScopeStmt              ] = 1; ++counter;
         statements_weights[Statement::SemicolonStmt          ] = 1; ++counter;
         statements_weights[Statement::CommentStmt            ] = 1; ++counter;
+        statements_weights[Statement::ReturnStmt             ] = 1; ++counter;
 
         if (counter != Statement::STATEMENTS_SIZE) throw std::runtime_error("Not all statements was default initialized");
         counter = 0LU;
 
         // expressions weights
-        expressions_weights[Expression::BinaryOperatorExpr   ] = 1; ++counter;
-        expressions_weights[Expression::UnaryOperatorExpr    ] = 1; ++counter;
-        expressions_weights[Expression::VariableExpr         ] = 1; ++counter;
-        expressions_weights[Expression::NumberLiteralExpr    ] = 1; ++counter;
-        expressions_weights[Expression::InExpr               ] = 0; ++counter;
-        expressions_weights[Expression::PrintExpr            ] = 1; ++counter;
-    
+        expressions_weights[Expression::BinaryOperatorExpr     ] = 1; ++counter;
+        expressions_weights[Expression::UnaryOperatorExpr      ] = 1; ++counter;
+        expressions_weights[Expression::VariableExpr           ] = 1; ++counter;
+        expressions_weights[Expression::NumberLiteralExpr      ] = 1; ++counter;
+        expressions_weights[Expression::InExpr                 ] = 0; ++counter;
+        expressions_weights[Expression::PrintExpr              ] = 1; ++counter;
+        expressions_weights[Expression::FunctionDeclarationExpr] = 1; ++counter;
+        expressions_weights[Expression::FunctionCallExpr       ] = 1; ++counter;
+
         if (counter != Expression::EXPRESSIONS_SIZE) throw std::runtime_error("Not all expressions was default initialized");
         counter = 0LU;
 
@@ -202,7 +211,7 @@ private:
             expressions_weights[Expression::InExpr           ] != 0;
 
         if (has_terminal_expression) return;
-    
+
         throw std::runtime_error(
             "NumberLiteralExpr and InExpr weights are zero.\n"
             "Terminal expressions are disabled, so the generator is incorrectly configured.\n"
@@ -219,7 +228,7 @@ private:
             statements_weights[Statement::SemicolonStmt ] != 0 or
             statements_weights[Statement::CommentStmt   ] != 0
         );
-        
+
         if (has_terminal_statements) return;
 
         throw std::runtime_error("No terminal statements enabled (print, expressions, ...). Incorrect generator configuration");

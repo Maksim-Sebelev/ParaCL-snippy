@@ -56,7 +56,6 @@ private:
 
     std::size_t scope_depth_  = 0LU;
     std::size_t expression_depth_ = 0LU;
-    std::size_t statements_counter_ = 0LU;
 
     bool делаем_пасхалку_ : 1;
     std::vector<std::string_view> пасхалка_
@@ -265,6 +264,8 @@ private:
         add_expression_if_its_possible(Expression::BinaryOperatorExpr);
         add_expression_if_its_possible(Expression::UnaryOperatorExpr);
         add_expression_if_its_possible(Expression::PrintExpr);
+        // add_expression_if_its_possible(Expression::FunctionDeclarationExpr);
+        add_expression_if_its_possible(Expression::FunctionCallExpr);
 
         if (expressions.empty())
             return BasicNode{};
@@ -274,16 +275,19 @@ private:
 
         switch (chosen)
         {
-            case Expression::BinaryOperatorExpr: return generate_binary_operator();
-            case Expression::UnaryOperatorExpr : return generate_unary_operator ();
-            case Expression::PrintExpr         : return generate_print          ();
-            default: break;
+            case Expression::BinaryOperatorExpr:
+                return generate_binary_operator();
+
+            case Expression::UnaryOperatorExpr:
+                return generate_unary_operator();
+
+            case Expression::PrintExpr:
+                return generate_print();
+
+            default:
+                throw std::runtime_error("Invalid terminal expression selected");
         }
-#if defined(NDEBUG)
-        __builtin_unreachable();
-#else /* defined(NDEBUG) */
-        throw std::runtime_error("udnefined unary operator in " + std::string(__PRETTY_FUNCTION__));
-#endif /* defined(NDEBUG) */
+        return BasicNode{};
     }
 
     void reset_continue_expression_probability()
@@ -376,7 +380,7 @@ private:
         auto&& type = node.type();
 
         auto&& right = calc_constant_expression(node.rarg());
-    
+
         if (node.larg().is_a<last::node::Variable>() and type == last::node::BinaryOperator::ASGN)
             return right;
 
@@ -538,7 +542,7 @@ private:
             return generate_not_scoped_statement();
 
         ++scope_depth_;
-    
+
         auto&& scope = generate_scope_impl();
 
         --scope_depth_;
@@ -586,6 +590,7 @@ private:
         add_expression_if_its_possible(Statement::ExpressionStmt);
         add_expression_if_its_possible(Statement::SemicolonStmt);
         add_expression_if_its_possible(Statement::CommentStmt);
+        add_expression_if_its_possible(Statement::ReturnStmt);
 
         if (statements.empty())
             throw std::runtime_error("Requests not scoped statement, but no one is enabled");
@@ -610,7 +615,8 @@ private:
             case Statement::CommentStmt:
                 return generate_comment();
 
-            default: break;
+            default:
+                throw std::runtime_error("Invalid terminal expression selected");
         }
 #if defined(NDEBUG)
         __builtin_unreachable();
@@ -658,6 +664,9 @@ private:
             case Statement::CommentStmt:
                 return generate_comment();
 
+            case Statement::ReturnStmt:
+                return generate_return();
+
 #if not defined(NDEBUG)
             case Statement::STATEMENTS_SIZE:
                 throw std::runtime_error("Statement::STATEMENTS_SIZE is unexpected here.");
@@ -695,6 +704,8 @@ private:
             static unique_name_id_t id = 0;
             auto&& tmp_var = last::node::create(last::node::Variable{"save_from_everlasting_summ__oh_hm_i_mean_while_" + std::to_string(id++)});
             auto&& zero = last::node::create(last::node::NumberLiteral{0});
+            auto&& one = last::node::create(last::node::NumberLiteral{1});
+            auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
             auto&& tmp_var_init = last::node::create(last::node::BinaryOperator
                 {
                     last::node::BinaryOperator::ASGN,
@@ -783,6 +794,13 @@ private:
         // (for exmample can be situation:
         // var = var + 1
         // but var was not declared in this statement yet
+
+        bool can_generate_function =
+            enabled(Expression::FunctionDeclarationExpr) &&
+            function_depth_ < settings_.max_function_depth_;
+
+        if (can_generate_function && std::bernoulli_distribution(0.3)(random_))
+            return generate_function_assign();
 
         auto&& value        = generate_expression();
         auto&& kind_dist    = std::uniform_int_distribution<int> (0, 1 + (not name_generator_.empty()));
@@ -917,7 +935,7 @@ private:
             op == last::node::BinaryOperator::DIVASGN or
             op == last::node::BinaryOperator::REMASGN
         );
-    
+
         if (op_use_variable_always)
         {
             if (name_generator_.empty())
@@ -950,16 +968,145 @@ private:
             op == last::node::BinaryOperator::DIV or
             op == last::node::BinaryOperator::DIVASGN
             ) and settings_.save_div)
-            or (( 
+            or ((
                 op == last::node::BinaryOperator::REM or
                 op == last::node::BinaryOperator::REMASGN
             ) and settings_.save_rem);
-        
+
         if (rhs_cant_be_zero)
             modify_expression_to_guareanted_do_it_not_equal_to_zero(rhs);
 
         update_continue_expression_probability();
         --expression_depth_;
+
+        return last::node::create(last::node::BinaryOperator{
+            op,
+            std::move(lhs),
+            std::move(rhs)
+        });
+    }
+
+    std::string generate_function_name()
+    {
+        return "fn_" + std::to_string(next_function_id_++);
+    }
+
+    std::vector<std::string> generate_function_args() // TODO: потом сделать через отдельный генератор имён
+    {
+        std::uniform_int_distribution<int> argc_dist(0, 3);
+        auto argc = argc_dist(random_);
+
+        std::vector<std::string> args;
+        args.reserve(argc);
+
+        for (int i = 0; i < argc; ++i)
+            args.push_back("arg_" + std::to_string(i));
+
+        return args;
+    }
+
+    BasicNode generate_return()
+    {
+        if (!inside_function_)
+            return generate_expression();
+
+        return last::node::create(last::node::Return{
+            generate_expression()
+        });
+    }
+
+    BasicNode generate_function_assign()
+    {
+        auto value = generate_function_declaration();
+        auto variable = name_generator_.generate_absolute_new_variable();
+
+        if (variable.is_a<last::node::Variable>())
+        {
+            auto const& var = static_cast<last::node::Variable const&>(variable);
+            function_names_.push_back(std::string(var.name()));
+        }
+
+        return last::node::create(last::node::BinaryOperator
+        {
+            last::node::BinaryOperator::ASGN,
+            std::move(variable),
+            std::move(value)
+        });
+    }
+
+    BasicNode generate_function_declaration()
+    {
+        if (function_depth_ >= settings_.max_function_depth_)
+            return generate_terminal_expression();
+
+        ++function_depth_;
+
+        std::vector<std::string> args = {"x"};
+        auto body_expr = generate_function_body_expression("x");
+
+        std::vector<BasicNode> body_statements;
+        body_statements.push_back(std::move(body_expr));
+
+        auto body = last::node::create(last::node::Scope{std::move(body_statements)});
+
+        --function_depth_;
+
+        return last::node::create(last::node::FunctionDeclaration{
+            "",
+            std::move(args),
+            std::move(body)
+        });
+    }
+
+    BasicNode generate_function_call()
+    {
+        if (function_names_.empty())
+            return generate_terminal_expression();
+
+        std::uniform_int_distribution<std::size_t> fn_dist(0, function_names_.size() - 1);
+        auto fn_name = std::string(function_names_[fn_dist(random_)]);
+
+        std::vector<BasicNode> args;
+        args.push_back(generate_terminal_expression());
+
+        return last::node::create(last::node::FunctionCall{
+            std::move(fn_name),
+            std::move(args)
+        });
+    }
+
+    BasicNode generate_function_body_expression(std::string const& arg_name)
+    {
+        auto arg = last::node::create(last::node::Variable{std::string(arg_name)});
+        auto num = generate_number();
+
+        std::array<last::node::BinaryOperator::BinaryOperatorT, 4> ops =
+        {
+            last::node::BinaryOperator::ADD,
+            last::node::BinaryOperator::SUB,
+            last::node::BinaryOperator::MUL,
+            last::node::BinaryOperator::DIV
+        };
+
+        std::uniform_int_distribution<std::size_t> op_dist(0, ops.size() - 1);
+        auto op = ops[op_dist(random_)];
+
+        BasicNode lhs;
+        BasicNode rhs;
+
+        if (std::bernoulli_distribution(0.5)(random_))
+        {
+            lhs = std::move(arg);
+            rhs = std::move(num);
+        }
+        else
+        {
+            lhs = std::move(num);
+            rhs = last::node::create(last::node::Variable{std::string(arg_name)});
+        }
+
+        if (op == last::node::BinaryOperator::DIV)
+            modify_expression_to_guareanted_do_it_not_equal_to_zero(rhs);
 
         return last::node::create(last::node::BinaryOperator{
             op,
@@ -1018,9 +1165,7 @@ public:
         name_generator_(random_),
         generate_next_statement_probability_(settings_.generate_next_statement_probability),
         continue_expression_probability_    (settings_.continue_expression_max_probability),
-        делаем_пасхалку_(std::uniform_int_distribution<int>{0, 10}(random_) == 0)
-    {
-    }
+        делаем_пасхалку_(std::uniform_int_distribution<int>{0, 10}(random_) == 0) {}
 
 public:
     last::AST generate_random_ast()
