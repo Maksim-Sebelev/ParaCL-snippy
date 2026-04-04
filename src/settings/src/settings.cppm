@@ -71,6 +71,7 @@ public:
     std::size_t max_function_depth     = 2;
     std::size_t while_iterations_limit = 30;
 
+
     bool save_div                : 1 = true;
     bool save_rem                : 1 = true;
     bool guaranteed_to_end_while : 1 = true;
