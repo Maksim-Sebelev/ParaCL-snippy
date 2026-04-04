@@ -54,9 +54,15 @@ private:
     probability_t generate_next_statement_probability_;
     probability_t continue_expression_probability_;
 
-    std::size_t scope_depth_  = 0LU;
-    std::size_t expression_depth_ = 0LU;
+    std::size_t scope_depth_        = 0LU;
+    std::size_t expression_depth_   = 0LU;
+    std::size_t statements_counter_ = 0LU;
+    std::size_t function_depth_     = 0LU;
+    std::size_t next_function_id_   = 0LU;
 
+    std::vector<std::string> function_names_;
+
+    bool inside_function_ = false;
     bool делаем_пасхалку_ : 1;
     std::vector<std::string_view> пасхалка_
     {
@@ -717,8 +723,8 @@ private:
             if (too_many_statements())
                 return tmp_var_init; // here while is 2, not 1 statement. so we dont want to violate statements limit.
 
-            auto&& one = last::node::create(last::node::NumberLiteral{1});
-            auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
+            // auto&& one = last::node::create(last::node::NumberLiteral{1});
+            // auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
 
             auto&& tmp_var_inc = last::node::create(last::node::BinaryOperator
                 {
@@ -797,7 +803,7 @@ private:
 
         bool can_generate_function =
             enabled(Expression::FunctionDeclarationExpr) &&
-            function_depth_ < settings_.max_function_depth_;
+            function_depth_ < settings_.max_function_depth;
 
         if (can_generate_function && std::bernoulli_distribution(0.3)(random_))
             return generate_function_assign();
@@ -1036,7 +1042,7 @@ private:
 
     BasicNode generate_function_declaration()
     {
-        if (function_depth_ >= settings_.max_function_depth_)
+        if (function_depth_ >= settings_.max_function_depth)
             return generate_terminal_expression();
 
         ++function_depth_;
