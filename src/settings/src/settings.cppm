@@ -57,7 +57,7 @@ private:
     using UnaryOperator  = last::node::UnaryOperator::UnaryOperatorT;
 
 public:
-    probability_t generate_next_statement_probability = 0.8;
+    probability_t generate_next_statement_probability = 0.9;
     probability_t continue_expression_max_probability = 0.6;
 
     std::array<weight_t, Statement :: STATEMENTS_SIZE> statements_weights;
@@ -95,11 +95,11 @@ public:
         counter = 0LU;
 
         // expressions weights
+        expressions_weights[Expression::InExpr                 ] = 0; ++counter; // no with default settings
         expressions_weights[Expression::BinaryOperatorExpr     ] = 1; ++counter;
         expressions_weights[Expression::UnaryOperatorExpr      ] = 1; ++counter;
         expressions_weights[Expression::VariableExpr           ] = 1; ++counter;
         expressions_weights[Expression::NumberLiteralExpr      ] = 1; ++counter;
-        expressions_weights[Expression::InExpr                 ] = 0; ++counter;
         expressions_weights[Expression::PrintExpr              ] = 1; ++counter;
         expressions_weights[Expression::FunctionDeclarationExpr] = 1; ++counter;
         expressions_weights[Expression::FunctionCallExpr       ] = 1; ++counter;

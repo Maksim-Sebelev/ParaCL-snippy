@@ -62,7 +62,8 @@ private:
 
     std::vector<std::string> function_names_;
 
-    bool inside_function_ = false;
+    bool inside_function_ : 1 = false;
+
     bool делаем_пасхалку_ : 1;
     std::vector<std::string_view> пасхалка_
     {
@@ -238,19 +239,17 @@ private:
 
         switch (chosen)
         {
-            case Expression::NumberLiteralExpr:
-                return generate_number();
-
-            case Expression::VariableExpr:
-                return generate_variable();
-
-            case Expression::InExpr:
-                return generate_in();
-
-            default:
-                throw std::runtime_error("Invalid terminal expression selected");
+            case Expression::NumberLiteralExpr: return generate_number();
+            case Expression::VariableExpr     : return generate_variable();
+            case Expression::InExpr           : return generate_in();
+            default: break;
         }
+
+#if defined(NDEBUG)
         __builtin_unreachable();
+#else /* defined(NDEBUG) */
+        throw std::runtime_error("Invalid terminal expression selected");
+#endif /* defined(NDEBUG) */
     }
 
 
@@ -270,7 +269,6 @@ private:
         add_expression_if_its_possible(Expression::BinaryOperatorExpr);
         add_expression_if_its_possible(Expression::UnaryOperatorExpr);
         add_expression_if_its_possible(Expression::PrintExpr);
-        // add_expression_if_its_possible(Expression::FunctionDeclarationExpr);
         add_expression_if_its_possible(Expression::FunctionCallExpr);
 
         if (expressions.empty())
@@ -281,19 +279,17 @@ private:
 
         switch (chosen)
         {
-            case Expression::BinaryOperatorExpr:
-                return generate_binary_operator();
-
-            case Expression::UnaryOperatorExpr:
-                return generate_unary_operator();
-
-            case Expression::PrintExpr:
-                return generate_print();
-
-            default:
-                throw std::runtime_error("Invalid terminal expression selected");
+            case Expression::BinaryOperatorExpr     : return generate_binary_operator     ();
+            case Expression::UnaryOperatorExpr      : return generate_unary_operator      ();
+            case Expression::PrintExpr              : return generate_print               ();
+            case Expression::FunctionCallExpr       : return generate_function_call       ();
+            default: break;
         }
-        return BasicNode{};
+#if defined(NDEBUG)
+        __builtin_unreachable();
+#else /* defined(NDEBUG) */
+        throw std::runtime_error("Incorrect unterminal expression selected");
+#endif /* defined(NDEBUG) */
     }
 
     void reset_continue_expression_probability()
@@ -410,21 +406,6 @@ private:
 
             default: break;
         }
-
-        // assert(right != 0);
-        // auto&& rarg_copy = BasicNode{node.rarg()};
-
-        // modify_expression_to_guareanted_do_it_not_equal_to_zero(rarg_copy);
-
-        // right = calc_constant_expression(rarg_copy); assert(right != 0);
-
-        // switch (node.type())
-        // {
-        //     case last::node::BinaryOperator::DIV: return left / right;
-        //     case last::node::BinaryOperator::REM: return left % right;
-        //     default: break;
-        // }
-
         throw NotConstantExpression{};
     }
 
@@ -586,6 +567,7 @@ private:
         auto&& add_expression_if_its_possible = [&](Statement id) -> void
         {
             if (not enabled(id)) return;
+            if ((id == Statement::ReturnStmt) and (not inside_function_)) return;
 
             statements.push_back(id);
             weights.push_back(settings_.statements_weights[id]);
@@ -598,36 +580,25 @@ private:
         add_expression_if_its_possible(Statement::CommentStmt);
         add_expression_if_its_possible(Statement::ReturnStmt);
 
-        if (statements.empty())
-            throw std::runtime_error("Requests not scoped statement, but no one is enabled");
+        assert(not statements.empty());
 
         std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
         auto&& chosen = statements[dist(random_)];
 
         switch (chosen)
         {
-            case Statement::AssignStmt:
-                return generate_assign();
-
-            case Statement::PrintStmt:
-                return generate_print();
-
-            case Statement::ExpressionStmt:
-                return generate_expression();
-
-            case Statement::SemicolonStmt:
-                return generate_semicolon();
-
-            case Statement::CommentStmt:
-                return generate_comment();
-
-            default:
-                throw std::runtime_error("Invalid terminal expression selected");
+            case Statement::AssignStmt    : return generate_assign    ();
+            case Statement::PrintStmt     : return generate_print     ();
+            case Statement::ExpressionStmt: return generate_expression();
+            case Statement::SemicolonStmt : return generate_semicolon ();
+            case Statement::CommentStmt   : return generate_comment   ();
+            case Statement::ReturnStmt    : return generate_return    ();
+            default: break;
         }
 #if defined(NDEBUG)
         __builtin_unreachable();
 #else /* defined(NDEBUG) */
-            throw std::runtime_error("Invalid terminal expression selected");
+            throw std::runtime_error("Invalid not scoped statement selected");
 #endif /* defined(NDEBUG) */
     }
 
@@ -801,9 +772,9 @@ private:
         // var = var + 1
         // but var was not declared in this statement yet
 
-        bool can_generate_function =
-            enabled(Expression::FunctionDeclarationExpr) &&
-            function_depth_ < settings_.max_function_depth;
+        auto&& can_generate_function =
+            enabled(Expression::FunctionDeclarationExpr) and
+            (function_depth_ < settings_.max_function_depth);
 
         if (can_generate_function && std::bernoulli_distribution(0.3)(random_))
             return generate_function_assign();
@@ -1023,14 +994,12 @@ private:
 
     BasicNode generate_function_assign()
     {
-        auto value = generate_function_declaration();
-        auto variable = name_generator_.generate_absolute_new_variable();
+        auto&& value = generate_function_declaration();
+        auto&& variable = name_generator_.generate_absolute_new_variable();
 
-        if (variable.is_a<last::node::Variable>())
-        {
-            auto const& var = static_cast<last::node::Variable const&>(variable);
-            function_names_.push_back(std::string(var.name()));
-        }
+        assert(variable.is_a<last::node::Variable>());
+        auto&& var = static_cast<last::node::Variable const&>(variable);
+        function_names_.push_back(std::string(var.name()));
 
         return last::node::create(last::node::BinaryOperator
         {

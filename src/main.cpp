@@ -17,6 +17,9 @@ int main(int argc, char* argv[]) try
     settings.check_configuration();
     auto&& random_ast = test_generator::generate_random_ast(settings);
     test_generator::serialize(random_ast, options);
+#if not defined(NDEBUG)
+    last::dump(random_ast, "ast.dot", "ast.svg");
+#endif /* not defined(NDEBUG) */
     return EXIT_SUCCESS;
 }
 catch (std::exception const & e)

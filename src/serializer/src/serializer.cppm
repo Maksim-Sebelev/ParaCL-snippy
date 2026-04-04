@@ -310,9 +310,11 @@ void visit(Return const & node, std::ostream& os, size_t enclosure, [[maybe_unus
 }
 
 template <>
-void visit(FunctionDeclaration const & node, std::ostream& os, [[maybe_unused]] size_t enclosure, test_generator::BuildProgramSetting setting)
+void visit(FunctionDeclaration const & node, std::ostream& os, size_t enclosure, test_generator::BuildProgramSetting setting)
 {
-    expression_or_statement_begin_action(os, enclosure, setting);
+    auto&& is_not_expression = test_generator::is_not_expression(setting);
+    if (is_not_expression)
+        test_generator::write_n_tab(os, enclosure);
 
     os << node.name() << "func(";
     auto&& args = node.args();
@@ -330,9 +332,7 @@ void visit(FunctionDeclaration const & node, std::ostream& os, [[maybe_unused]] 
     if (not node.name().empty())
         os << " : " << node.name();
 
-    serialize(node.body(), os, 0, test_generator::BuildProgramSetting::DummyValue);
-
-    expression_or_statement_end_action(os, setting);
+    serialize(node.body(), os, enclosure, test_generator::BuildProgramSetting::DummyValue);
 }
 
 template <>
