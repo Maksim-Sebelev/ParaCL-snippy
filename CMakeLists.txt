@@ -19,27 +19,10 @@ else()
   endif(CMAKE_CXX_STANDARD LESS 20)
 endif()
 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
-endif()
-
-option(PARACL_SNIPPY_ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
-
-if (PARACL_SNIPPY_ENABLE_SANITIZERS)
-  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    add_compile_options(
-      -g
-      -O0
-      -fno-omit-frame-pointer
-      -fsanitize=address,undefined
-    )
-
-    add_link_options(
-      -fsanitize=address,undefined
-    )
-  else()
-    message(WARNING "Sanitizers are supported only for Clang/GCC in this setup")
-  endif()
 endif()
 
 # =================================================================================================
