@@ -74,7 +74,7 @@ public:
 
     bool save_div                : 1 = true;
     bool save_rem                : 1 = true;
-    bool guaranteed_to_end_while : 1 = true;
+    bool save_while              : 1 = true;
 
     constexpr SnippySettings()
     {
@@ -101,8 +101,8 @@ public:
         expressions_weights[Expression::VariableExpr           ] = 1; ++counter;
         expressions_weights[Expression::NumberLiteralExpr      ] = 1; ++counter;
         expressions_weights[Expression::PrintExpr              ] = 1; ++counter;
-        expressions_weights[Expression::FunctionDeclarationExpr] = 1; ++counter;
-        expressions_weights[Expression::FunctionCallExpr       ] = 1; ++counter;
+        expressions_weights[Expression::FunctionDeclarationExpr] = 0; ++counter; // FIXME: change to 1, when stable function support
+        expressions_weights[Expression::FunctionCallExpr       ] = 0; ++counter; // FIXME: change to 1, when stable function support
 
         if (counter != Expression::EXPRESSIONS_SIZE) throw std::runtime_error("Not all expressions was default initialized");
         counter = 0LU;
@@ -233,6 +233,17 @@ private:
         throw std::runtime_error("No terminal statements enabled (print, expressions, ...). Incorrect generator configuration");
     }
 
+    void check_function_settings() const
+    {
+        auto&& flag = (
+            expressions_weights[Expression::FunctionCallExpr       ] == 0 or
+            expressions_weights[Expression::FunctionDeclarationExpr] != 0
+        );
+
+        if (flag) return;
+
+        throw std::runtime_error("Enabled function call like expression, but function declarations are disabled. Incorrect generator configuration");
+    }
 public:
     void check_configuration() const
     {
@@ -242,6 +253,7 @@ public:
         check_binop_weight        ();
         check_unop_weight         ();
         check_terminal_expressions();
+        check_function_settings   ();
     }
 };
 

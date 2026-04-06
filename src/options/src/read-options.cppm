@@ -15,7 +15,6 @@ namespace test_generator
 export
 Options read_options(int argc, char* argv[])
 {
-
     boost::program_options::options_description desc(
 R"(
  [0;1;31;91mm[0;1;33;93mmm[0;1;32;92mmm[0m                         [0;1;36;96mm[0;1;34;94mmm[0m  [0;1;31;91mm[0m                             [0;1;36;96m"[0m                        

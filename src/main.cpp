@@ -29,6 +29,6 @@ catch (std::exception const & e)
 }
 catch (...)
 {
-    std::cerr << "ParaCL-snippy: undefined error.\n";
+    std::cerr << "ParaCL-snippy: error: something unknown.\nPlease submit a bug report with your settings, or just tell us if error was produced with default settings.\n";
     return EXIT_FAILURE;
 }

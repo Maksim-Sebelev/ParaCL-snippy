@@ -674,7 +674,7 @@ private:
 
         auto&& condition = generate_expression();
 
-        if (settings_.guaranteed_to_end_while)
+        if (settings_.save_while)
         {
             ++statements_counter_; // for tmp variable declaration
 

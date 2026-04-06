@@ -2,7 +2,7 @@
     "statements-weights": {
         "while"      : 0,
         "assign"     : 0,
-        "expression" : 0,
+        "expression" : 10,
         "if"         : 1,
         "print"      : 1,
         "scope"      : 0,
@@ -33,18 +33,18 @@
             "islse"  : 0
         },
         "unop-weights": {
-            "minus": 0,
-            "plus" : 0,
-            "not"  : 0
+            "minus"  : 0,
+            "plus"   : 0,
+            "not"    : 0
         },
-        "binop"   : 2,
-        "unop"    : 0,
-        "print"   : 0,
-        "in"      : 0,
-        "variable": 0,
-        "number"  : 1,
-        "function-declaration": 0,
-        "function-call"       : 0
+        "binop"      : 2,
+        "unop"       : 0,
+        "print"      : 0,
+        "in"         : 0,
+        "variable"   : 0,
+        "number"     : 1,
+        "funccall"   : 1,
+        "funcdecl"   : 1
     },
     "next-stmt-p"           : 1,
     "statements-limit"      : 666,
