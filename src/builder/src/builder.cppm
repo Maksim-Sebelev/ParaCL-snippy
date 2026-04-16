@@ -549,8 +549,6 @@ private:
         auto&& statements = std::vector<BasicNode>{};
         while ((will_generate_new_statement()) and (not too_many_statements()))
         {
-            // auto&& statement = generate_statement();
-            // statements.push_back(std::move(statement));
             statements.push_back(generate_statement());
         }
 
@@ -617,32 +615,15 @@ private:
 
         switch (selected_id)
         {
-            case Statement::ExpressionStmt:
-                return generate_expression();
-
-            case Statement::WhileStmt:
-                return generate_while();
-
-            case Statement::IfStmt:
-                return generate_if();
-
-            case Statement::AssignStmt:
-                return generate_assign();
-
-            case Statement::PrintStmt:
-                return generate_print();
-
-            case Statement::ScopeStmt:
-                return generate_scope();
-
-            case Statement::SemicolonStmt:
-                return generate_semicolon();
-
-            case Statement::CommentStmt:
-                return generate_comment();
-
-            case Statement::ReturnStmt:
-                return generate_return();
+            case Statement::ExpressionStmt: return generate_expression();
+            case Statement::WhileStmt     : return generate_while     ();
+            case Statement::IfStmt        : return generate_if        ();
+            case Statement::AssignStmt    : return generate_assign    ();
+            case Statement::PrintStmt     : return generate_print     ();
+            case Statement::ScopeStmt     : return generate_scope     ();
+            case Statement::SemicolonStmt : return generate_semicolon ();
+            case Statement::CommentStmt   : return generate_comment   ();
+            case Statement::ReturnStmt    : return generate_return    ();
 
 #if not defined(NDEBUG)
             case Statement::STATEMENTS_SIZE:

@@ -131,6 +131,7 @@ void read_statements_weights(boost::json::value const & jv, SnippySettings& sett
     parse(Statement::ScopeStmt     , "scope"      );
     parse(Statement::CommentStmt   , "comment"    );
     parse(Statement::SemicolonStmt , "semicolon"  );
+    parse(Statement::ReturnStmt    , "return"     );
 }
 
 void read_binop_weights(boost::json::object const & jo, SnippySettings& settings)
