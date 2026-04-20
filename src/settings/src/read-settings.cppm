@@ -312,6 +312,8 @@ SnippySettings read_settings_(std::string_view json_data)
     read_while_iterations_limit(jv, settings);
     read_statements_limit(jv, settings);
 
+    settings.check_configuration();
+
     return settings;
 }
 

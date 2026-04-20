@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) try
 {
     auto&& options = test_generator::read_options(argc, argv);
     auto&& settings = test_generator::read_settings(options.settings_file);
-    settings.check_configuration();
     auto&& random_ast = test_generator::generate_random_ast(settings);
     test_generator::serialize(random_ast, options);
 #if not defined(NDEBUG)
