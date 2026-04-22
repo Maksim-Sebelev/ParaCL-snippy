@@ -48,7 +48,7 @@ Supported options)"
         std::cout << desc << "\n";
         std::exit(EXIT_SUCCESS);
     }
-    
+
     if (vm.count("version"))
     {
         std::cout << "ParaCL-snippy-" << PARACL_SNIPPY_VERSION << std::endl;

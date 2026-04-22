@@ -1,5 +1,4 @@
 #include <iostream>
-#include <filesystem>
 #include <stdexcept>
 #include <cstdlib>
 
@@ -12,8 +11,8 @@ import ast_serializer;
 
 int main(int argc, char* argv[]) try
 {
-    auto&& options = test_generator::read_options(argc, argv);
-    auto&& settings = test_generator::read_settings(options.settings_file);
+    auto&& options    = test_generator::read_options(argc, argv);
+    auto&& settings   = test_generator::read_settings(options.settings_file);
     auto&& random_ast = test_generator::generate_random_ast(settings);
     test_generator::serialize(random_ast, options);
 #if not defined(NDEBUG)
@@ -28,6 +27,8 @@ catch (std::exception const & e)
 }
 catch (...)
 {
-    std::cerr << "ParaCL-snippy: error: something unknown.\nPlease submit a bug report with your settings, or just tell us if error was produced with default settings.\n";
+    std::cerr << "ParaCL-snippy: error: something unknown.\n"
+                  "Please submit a bug report with your settings, "
+                  "or just tell us if error was produced with default settings.\n";
     return EXIT_FAILURE;
 }

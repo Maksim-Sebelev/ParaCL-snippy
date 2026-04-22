@@ -9,6 +9,7 @@ module;
 #include <array>
 #include <cassert>
 #include <iostream>
+#include <iterator>
 
 #include "create-basic-node.hpp"
 
@@ -234,7 +235,7 @@ private:
 
         assert(not expressions.empty());
 
-        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& dist = std::discrete_distribution<std::size_t>{weights.begin(), weights.end()};
         auto&& chosen = expressions[dist(random_)];
 
         switch (chosen)
@@ -274,7 +275,7 @@ private:
         if (expressions.empty())
             return BasicNode{};
 
-        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& dist = std::discrete_distribution<std::size_t>{weights.begin(), weights.end()};
         auto&& chosen = expressions[dist(random_)];
 
         switch (chosen)
@@ -547,11 +548,14 @@ private:
         name_generator_.new_scope();
 
         auto&& statements = std::vector<BasicNode>{};
-        while ((will_generate_new_statement()) and (not too_many_statements()))
-        {
-            statements.push_back(generate_statement());
-        }
+        statements.reserve(settings_.statements_limit);
 
+        auto&& statements_back_inserter = std::back_inserter(statements);
+    
+        while ((will_generate_new_statement()) and (not too_many_statements()))
+            statements_back_inserter = std::move(generate_statement());
+
+        statements.shrink_to_fit();
         name_generator_.leave_scope();
 
         return last::node::create(last::node::Scope{std::move(statements)});
@@ -580,7 +584,7 @@ private:
 
         assert(not statements.empty());
 
-        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& dist = std::discrete_distribution<std::size_t>{weights.begin(), weights.end()};
         auto&& chosen = statements[dist(random_)];
 
         switch (chosen)
@@ -606,10 +610,11 @@ private:
 
         auto&& weights = settings_.statements_weights;
 
-        std::discrete_distribution<std::size_t> dist(
+        auto&& dist = std::discrete_distribution<std::size_t>
+        {
             weights.begin(),
             weights.end()
-        );
+        };
 
         auto&& selected_id = static_cast<Statement>(dist(random_));
 
@@ -674,9 +679,6 @@ private:
 
             if (too_many_statements())
                 return tmp_var_init; // here while is 2, not 1 statement. so we dont want to violate statements limit.
-
-            // auto&& one = last::node::create(last::node::NumberLiteral{1});
-            // auto&& iteration_limits = last::node::create(last::node::NumberLiteral{static_cast<int>(settings_.while_iterations_limit)});
 
             auto&& tmp_var_inc = last::node::create(last::node::BinaryOperator
                 {
@@ -880,11 +882,11 @@ private:
         if (ops.size() == 0) throw std::runtime_error("no binop enabled, but they was requested");
 #endif /* not defined(NDEBUG) */
 
-        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& dist = std::discrete_distribution<std::size_t>{weights.begin(), weights.end()};
         auto&& op = ops[dist(random_)];
 
-        BasicNode lhs;
-        BasicNode rhs;
+        auto&& lhs = BasicNode{};
+        auto&& rhs = BasicNode{};
 
         auto&& op_use_variable_always = (
             op == last::node::BinaryOperator::ADDASGN or
@@ -966,7 +968,7 @@ private:
     BasicNode generate_return()
     {
         if (!inside_function_)
-            return generate_expression();
+            return generate_statement();
 
         return last::node::create(last::node::Return{
             generate_expression()
@@ -1102,7 +1104,7 @@ private:
         if (ops.size() == 0) throw std::runtime_error("no unop enabled, but they was requested");
 #endif /* not defined(NDEBUG) */
 
-        std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
+        auto&& dist = std::discrete_distribution<std::size_t>{weights.begin(), weights.end()};
         auto&& op = ops[dist(random_)];
 
         update_continue_expression_probability();

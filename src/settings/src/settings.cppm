@@ -89,7 +89,7 @@ public:
         statements_weights[Statement::ScopeStmt              ] = 1; ++counter;
         statements_weights[Statement::SemicolonStmt          ] = 1; ++counter;
         statements_weights[Statement::CommentStmt            ] = 1; ++counter;
-        statements_weights[Statement::ReturnStmt             ] = 1; ++counter;
+        statements_weights[Statement::ReturnStmt             ] = 0; ++counter; // FIXME: change to 1, when stable function support
 
         if (counter != Statement::STATEMENTS_SIZE) throw std::runtime_error("Not all statements was default initialized");
         counter = 0LU;
