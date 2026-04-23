@@ -2,9 +2,9 @@ module;
 
 #include <stdexcept>
 #include <cstddef>
-#include <filesystem>
 #include <array>
-#include <iostream>
+#include <algorithm>
+#include <iterator>
 
 export module settings;
 
@@ -71,7 +71,6 @@ public:
     std::size_t max_function_depth     = 2;
     std::size_t while_iterations_limit = 30;
 
-
     bool save_div                : 1 = true;
     bool save_rem                : 1 = true;
     bool save_while              : 1 = true;
@@ -81,15 +80,15 @@ public:
         auto&& counter = 0LU;
 
         // statements weights
-        statements_weights[Statement::ExpressionStmt         ] = 1; ++counter;
-        statements_weights[Statement::WhileStmt              ] = 1; ++counter;
-        statements_weights[Statement::IfStmt                 ] = 1; ++counter;
-        statements_weights[Statement::AssignStmt             ] = 1; ++counter;
-        statements_weights[Statement::PrintStmt              ] = 1; ++counter;
-        statements_weights[Statement::ScopeStmt              ] = 1; ++counter;
-        statements_weights[Statement::SemicolonStmt          ] = 1; ++counter;
-        statements_weights[Statement::CommentStmt            ] = 1; ++counter;
-        statements_weights[Statement::ReturnStmt             ] = 0; ++counter; // FIXME: change to 1, when stable function support
+        statements_weights[Statement::ExpressionStmt           ] = 1; ++counter;
+        statements_weights[Statement::WhileStmt                ] = 1; ++counter;
+        statements_weights[Statement::IfStmt                   ] = 1; ++counter;
+        statements_weights[Statement::AssignStmt               ] = 1; ++counter;
+        statements_weights[Statement::PrintStmt                ] = 1; ++counter;
+        statements_weights[Statement::ScopeStmt                ] = 1; ++counter;
+        statements_weights[Statement::SemicolonStmt            ] = 1; ++counter;
+        statements_weights[Statement::CommentStmt              ] = 1; ++counter;
+        statements_weights[Statement::ReturnStmt               ] = 0; ++counter; // FIXME: change to 1, when stable function support
 
         if (counter != Statement::STATEMENTS_SIZE) throw std::runtime_error("Not all statements was default initialized");
         counter = 0LU;
@@ -108,63 +107,60 @@ public:
         counter = 0LU;
 
         // binary operators weights
-        binary_operators_weights[BinaryOperator::AND         ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::OR          ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ADD         ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::SUB         ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::MUL         ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::DIV         ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::REM         ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ASGN        ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ADDASGN     ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::SUBASGN     ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::MULASGN     ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::DIVASGN     ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::REMASGN     ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ISEQ        ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ISNE        ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ISAB        ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ISABE       ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ISLS        ] = 1; ++counter;
-        binary_operators_weights[BinaryOperator::ISLSE       ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::AND           ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::OR            ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ADD           ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::SUB           ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::MUL           ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::DIV           ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::REM           ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ASGN          ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ADDASGN       ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::SUBASGN       ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::MULASGN       ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::DIVASGN       ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::REMASGN       ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ISEQ          ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ISNE          ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ISAB          ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ISABE         ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ISLS          ] = 1; ++counter;
+        binary_operators_weights[BinaryOperator::ISLSE         ] = 1; ++counter;
 
         if (counter != BinaryOperator::BINOPS_SIZE) throw std::runtime_error("Not all binary operators was default initialized");
         counter = 0LU;
 
         // unary operators weights
-        unary_operators_weights[UnaryOperator::MINUS         ] = 1; ++counter;
-        unary_operators_weights[UnaryOperator::PLUS          ] = 1; ++counter;
-        unary_operators_weights[UnaryOperator::NOT           ] = 1; ++counter;
+        unary_operators_weights[UnaryOperator::MINUS           ] = 1; ++counter;
+        unary_operators_weights[UnaryOperator::PLUS            ] = 1; ++counter;
+        unary_operators_weights[UnaryOperator::NOT             ] = 1; ++counter;
 
         if (counter != UnaryOperator::UNOPS_SIZE) throw std::runtime_error("Not all unary operators was default initialized");
         counter = 0LU;
     }
 
 private:
+    template <std::forward_iterator It>
+    static bool exists_instruction_with_not_zero_weight(It begin, It end)
+    {
+        return std::any_of
+            (
+                begin,
+                end,
+                [](weight_t weight) -> bool { return weight != 0; }
+            );
+    }
+
     void check_statements_weight() const
     {
-        auto&& has_statement_weight = false;
-        for (auto&& w : statements_weights)
-        {
-            if (w == 0) continue;
-            has_statement_weight = true;
-            break;
-        }
-
+        auto&& has_statement_weight = exists_instruction_with_not_zero_weight(statements_weights.begin(), statements_weights.end());
         if (has_statement_weight) return;
         throw std::runtime_error("All statement weights are zero. Incorrect generator configuration.");
     }
 
     void check_expressions_weight() const
     {
-        auto&& has_expression_weight = false;
-        for (auto&& w : expressions_weights)
-        {
-            if (w == 0) continue;
-            has_expression_weight = true;
-            break;
-        }
-
+        auto&& has_expression_weight = exists_instruction_with_not_zero_weight(expressions_weights.begin(), expressions_weights.end());
         if (has_expression_weight) return;
         throw std::runtime_error("All expression weights are zero. Incorrect generator configuration.");
 
@@ -173,32 +169,16 @@ private:
     void check_binop_weight() const
     {
         if (expressions_weights[Expression::BinaryOperatorExpr] == 0) return;
-
-        auto&& has_binop_weiht = false;
-        for (auto&& w : binary_operators_weights)
-        {
-            if (w == 0) continue;
-            has_binop_weiht = true;
-            break;
-        }
-        if (has_binop_weiht) return;
-
+        auto&& has_binop_weight = exists_instruction_with_not_zero_weight(binary_operators_weights.begin(), binary_operators_weights.end());
+        if (has_binop_weight) return;
         throw std::runtime_error("All binary operatos weights are zero, but they are using in expressions. Incorrect generator configuration.");
     }
 
     void check_unop_weight() const
     {
         if (expressions_weights[Expression::UnaryOperatorExpr] == 0) return;
-
-        auto&& has_unop_weiht = false;
-        for (auto&& w : unary_operators_weights)
-        {
-            if (w == 0) continue;
-            has_unop_weiht = true;
-            break;
-        }
+        auto&& has_unop_weiht = exists_instruction_with_not_zero_weight(unary_operators_weights.begin(), unary_operators_weights.end());
         if (has_unop_weiht) return;
-
         throw std::runtime_error("All unary operatos weights are zero, but they are using in expressions. Incorrect generator configuration.");
     }
 
@@ -206,9 +186,11 @@ private:
     void check_terminal_expressions() const
     {
         auto&& has_terminal_expression =
+        (
             expressions_weights[Expression::NumberLiteralExpr] != 0 or
-            expressions_weights[Expression::InExpr           ] != 0;
-
+            expressions_weights[Expression::InExpr           ] != 0
+        );
+    
         if (has_terminal_expression) return;
 
         throw std::runtime_error(
@@ -220,7 +202,8 @@ private:
 
     void check_terminal_statements() const
     {
-        auto&& has_terminal_statements = (
+        auto&& has_terminal_statements =
+        (
             statements_weights[Statement::ExpressionStmt] != 0 or
             statements_weights[Statement::PrintStmt     ] != 0 or
             statements_weights[Statement::AssignStmt    ] != 0 or
@@ -235,7 +218,8 @@ private:
 
     void check_function_settings() const
     {
-        auto&& flag = (
+        auto&& flag =
+        (
             expressions_weights[Expression::FunctionCallExpr       ] == 0 or
             expressions_weights[Expression::FunctionDeclarationExpr] != 0
         );
@@ -244,6 +228,7 @@ private:
 
         throw std::runtime_error("Enabled function call like expression, but function declarations are disabled. Incorrect generator configuration");
     }
+
 public:
     void check_configuration() const
     {
