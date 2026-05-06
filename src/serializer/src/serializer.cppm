@@ -432,7 +432,7 @@ void serialize(last::AST const & ast, test_generator::Options const & options)
     }
 
     last::node::serialize(ast.root(), ofs, 0, test_generator::BuildProgramSetting::GlobalScope);
-    ofs << "\n";
+    ofs << "\n\n";
 }
 
 } /* namespace test_generator */

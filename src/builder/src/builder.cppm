@@ -20,7 +20,6 @@ export import settings;
 import name_generator;
 import ast_serializer;
 
-
 SPECIALIZE_CREATE(last::node::Scope              , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::LinearSequence     , last::node::serializable, last::node::dumpable)
 SPECIALIZE_CREATE(last::node::Print              , last::node::serializable, last::node::dumpable)
@@ -340,7 +339,6 @@ private:
         return settings_.statements_weights[id] != 0;
     }
 
-
     bool enabled(Expression id) const
     {
         assert(id < Expression::EXPRESSIONS_SIZE);
@@ -352,7 +350,6 @@ private:
         assert(id < last::node::BinaryOperator::BINOPS_SIZE);
         return settings_.binary_operators_weights[id] != 0;
     }
-
 
     bool enabled(last::node::UnaryOperator::UnaryOperatorT id) const
     {

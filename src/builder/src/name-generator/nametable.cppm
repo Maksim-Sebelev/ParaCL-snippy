@@ -13,9 +13,9 @@ module;
 #include <type_traits>
 #include <iostream>
 #include <cassert>
-
-#define LOGINFO(...)
-#define LOGERR(...)
+#include <algorithm>
+#include <iterator>
+#include <numeric>
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -35,7 +35,8 @@ export
 class Nametable
 {
   private:
-    using scopes_t = std::vector<std::unordered_set<unique_name_id_t>>;
+    using scope_t = std::unordered_set<unique_name_id_t>;
+    using scopes_t = std::vector<scope_t>;
     scopes_t scopes_;
     /* here size_t is not a unique_name_id_t */
     size_t unique_name_id_ = 0;
@@ -78,7 +79,6 @@ class Nametable
 
 void Nametable::new_scope()
 {
-    LOGINFO("paracl: interpreter: nametable: create next scope");
     scopes_.emplace_back();
 }
 
@@ -86,19 +86,18 @@ void Nametable::new_scope()
 
 void Nametable::leave_scope()
 {
-    LOGINFO("paracl: interpreter: nametable: exiting scope");
-
     if (scopes_.empty()) throw std::runtime_error("Trying leave scope in empty nametable");
 
-    auto&& counter = 0LU;
+    auto&& last_scope = scopes_.back();
+    auto&& unique_for_scope_names =
+        std::count_if
+        (
+            last_scope.begin(),
+            last_scope.end(),
+            [this](unique_name_id_t id) { return id < unique_name_id_; }
+        );
 
-    for (auto&& name: scopes_.back())
-    {
-        if (name >= unique_name_id_) continue;
-        ++counter;
-    }
-
-    unique_name_id_ -= counter;
+    unique_name_id_ -= unique_for_scope_names;
 
     scopes_.pop_back();
 }
@@ -121,20 +120,20 @@ unique_name_id_t Nametable::get_absolute_new_unique_name_id() const noexcept(std
 
 bool Nametable::exists(unique_name_id_t id) const
 {
-    for (auto&& scope: scopes_)
-    {
-        if (not scope.contains(id)) continue;
-        return true;
-    }
-    return false;
+    return
+        std::any_of
+        (
+            scopes_.begin(),
+            scopes_.end(),
+            [id](scope_t const & scope)
+            { return scope.contains(id); }
+        );
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
 void Nametable::declare(unique_name_id_t id)
 {
-    LOGINFO("paracl: interpreter: nametable: declate {} = \"{}\"", id);
-
     if (scopes_.empty())
        throw std::runtime_error("cannot declare variable (" + std::to_string(id) + "): no active scopes");
 
@@ -153,13 +152,13 @@ void Nametable::declare(unique_name_id_t id)
 
 bool Nametable::empty() const
 {
-    for (auto&& scope: scopes_)
-    {
-        if (scope.empty()) continue;
-        return false;
-    }
-
-    return true;
+    return
+        std::all_of
+        (
+            scopes_.begin(),
+            scopes_.end(),
+            [](scope_t const & scope) { return scope.empty(); }
+        );
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -179,12 +178,10 @@ std::vector<unique_name_id_t> Nametable::get_existing_variables() const
 
 size_t Nametable::size() const noexcept(std::is_nothrow_convertible_v<size_t, unique_name_id_t>)
 {
-    auto&& size = 0LU;
-
-    for (auto&& scope: scopes_)
-        size += scope.size();
-
-    return size;
+    return std::transform_reduce(scopes_.begin(), scopes_.end(), 0LU, 
+        std::plus<>(),
+        [](const scope_t& scope) { return scope.size(); }
+    );
 }
 
 //---------------------------------------------------------------------------------------------------------------
