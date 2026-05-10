@@ -315,22 +315,17 @@ private:
         continue_expression_probability_=
             settings_.continue_expression_max_probability * (remaining_depth / total_depth);
     }
-// depth = 0 => 0.8
-// depth = 1 => 0.6
-// depth = 2 => 0.4
-// depth = 3 => 0.2
-// depth = 4 => 0.0
 
     bool will_generate_new_statement()
     {
         auto&& dist = std::bernoulli_distribution{generate_next_statement_probability_};
-        return dist(random_);
+        return dist(random_) and (not too_many_statements());
     }
 
     bool will_continue_expression()
     {
         auto&& dist = std::bernoulli_distribution{continue_expression_probability_};
-        return dist(random_);
+        return dist(random_) and (not too_deep_expression());
     }
 
     bool enabled(Statement id) const
@@ -549,7 +544,7 @@ private:
 
         auto&& statements_back_inserter = std::back_inserter(statements);
     
-        while ((will_generate_new_statement()) and (not too_many_statements()))
+        while (will_generate_new_statement())
             statements_back_inserter = std::move(generate_statement());
 
         statements.shrink_to_fit();
@@ -807,7 +802,7 @@ private:
 
     BasicNode generate_expression_impl()
     {
-        auto&& cut_off_expression = (not will_continue_expression()) or (too_deep_expression());
+        auto&& cut_off_expression = not will_continue_expression();
 
         if (cut_off_expression)
             return generate_terminal_expression();

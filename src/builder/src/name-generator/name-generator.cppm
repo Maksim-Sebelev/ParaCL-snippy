@@ -70,8 +70,7 @@ private:
         assert(id != RandomExistingName);
         assert(id <= get_absolute_new_unique_name_id());
 
-        if (not exists(id))
-            declare(id);
+        if (not exists(id)) declare(id);
 
         auto&& name = generate_name_by_id(id);
 
@@ -84,14 +83,10 @@ public:
 
 public:
     last::node::BasicNode generate_new_variable()
-    {
-        return generate_variable(get_new_unique_name_id());
-    }
+    { return generate_variable(get_new_unique_name_id()); }
 
     last::node::BasicNode generate_absolute_new_variable()
-    {
-        return generate_variable(get_absolute_new_unique_name_id());
-    }
+    { return generate_variable(get_absolute_new_unique_name_id()); }
 
     last::node::BasicNode generate_existing_variable(unique_name_id_t id = RandomExistingName)
     {
